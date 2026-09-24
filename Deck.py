@@ -24,8 +24,8 @@ class Deck:
         self.setCards(cards)
 
     def shuffleDeck(self):
-        shuffledDeck = random.shuffle(self.getCards())
-        self.setCards(shuffledDeck)
+        shuffled_deck = random.shuffle(self.getCards())
+        self.setCards(shuffled_deck)
     
     def getDeckSize(self):
         return self.cards.len()
