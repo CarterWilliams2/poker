@@ -3,7 +3,7 @@ import random
 
 class Deck:
     def __init__(self):
-        self.cards = self.makeDeck()
+        self.makeDeck()
             
     def getCards(self):
         return self.cards
@@ -11,8 +11,8 @@ class Deck:
     def setCards(self, cards: list[Card]):
         self.cards = cards
     
-    def resetCards(self, cards: list[Card]):
-        self.cards = cards
+    def resetCards(self):
+        self.makeDeck()
     
     def makeDeck(self):
         cards = []
@@ -24,8 +24,7 @@ class Deck:
         self.setCards(cards)
 
     def shuffleDeck(self):
-        shuffled_deck = random.shuffle(self.getCards())
-        self.setCards(shuffled_deck)
+        random.shuffle(self.cards)
     
     def getDeckSize(self):
         return self.cards.len()
