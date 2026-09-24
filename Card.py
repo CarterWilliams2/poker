@@ -8,4 +8,3 @@ class Card:
     
     def getSuit(self):
         return self.suit
-
