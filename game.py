@@ -25,3 +25,14 @@ class Game:
             card = self.deck.getACard()
             self.community_cards.append(card)
     
+    def turn(self):
+        self.deck.discard()
+        
+        card = self.deck.getACard()
+        self.community_cards.append(card)
+    
+    def river(self):
+        self.deck.discard()
+        
+        card = self.deck.getACard()
+        self.community_cards.append(card)
