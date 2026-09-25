@@ -11,8 +11,13 @@ class Player:
     def hand(self):
         return list(self._hand)
     
+    @property
+    def chips(self):
+        return self._chips
+
+    
     def _pay(self, amount):
-        amount = min(amount, self.chips)
+        amount = min(amount, self._chips)
         self.chips -= amount
         self.committed_this_round += amount
     
