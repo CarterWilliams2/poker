@@ -8,3 +8,7 @@ class Card:
     
     def getSuit(self):
         return self.suit
+    
+    def toString(self):
+        res = self.getValue() + " of " + self.getSuit
+        return res
