@@ -5,38 +5,38 @@ class Game:
     def __init__(self, players: list[Player]):
         self._players = players
         self._deck = Deck()
-        self._communityCards = []
+        self._community_cards = []
 
     @property
-    def communityCards(self):
-        return list(self._communityCards)
+    def community_cards(self):
+        return list(self._community_cards)
 
-    def getPlayerCount(self):
+    def get_player_count(self):
         return len(self._players)
 
-    def shuffleDeck(self):
-        self._deck.shuffleDeck()
+    def shuffle_deck(self):
+        self._deck.shuffle_deck()
 
     def _deal(self, player: Player):
-        card = self._deck.getACard()
-        player.addCardToHand(card)
+        card = self._deck.get_a_card()
+        player.add_card_to_hand(card)
 
-    def dealToAllPlayers(self):
+    def deal_to_all_players(self):
         for _ in range(2):
             for player in self._players:
                 self._deal(player)
 
-    def _burnAndDeal(self, count: int):
+    def _burn_and_deal(self, count: int):
         self._deck.discard()
         for _ in range(count):
-            card = self._deck.getACard()
-            self._communityCards.append(card)
+            card = self._deck.get_a_card()
+            self._community_cards.append(card)
 
     def flop(self):
-        self._burnAndDeal(3)
+        self._burn_and_deal(3)
 
     def turn(self):
-        self._burnAndDeal(1)
+        self._burn_and_deal(1)
 
     def river(self):
-        self._burnAndDeal(1)
+        self._burn_and_deal(1)

@@ -11,5 +11,5 @@ class Card:
     def suit(self):
         return self._suit
 
-    def toString(self):
+    def to_string(self):
         return self._value + " of " + self._suit
