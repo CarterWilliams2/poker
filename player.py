@@ -53,5 +53,5 @@ class Player:
         self.bet(difference)
         
     def addCardToHand(self, card: Card):
-        if (len(card) < 2):
+        if (len(self.hand) < 2):
             self.hand.append(card)
