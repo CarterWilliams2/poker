@@ -3,7 +3,7 @@ class Player:
     def __init__(self, name, chips):
         self.name = name
         self.chips = chips
-        self.hand = None
+        self.hand = list[Card]
         self.current_bet = None
     
     def getChips(self):
@@ -44,10 +44,13 @@ class Player:
         self.bet(all_chips)
         self.setCurrentBet(all_chips)
     
-    def call(self, current_bet, call_amount):
+    def call(self, current_bet: int, call_amount: int):
         difference = call_amount - current_bet
         self.bet(difference)
     
-    def raiseBet(self, current_bet, raised_amount):
+    def raiseBet(self, current_bet: int, raised_amount: int):
         difference = raised_amount - current_bet
         self.bet(difference)
+        
+    def addCardToHand(self, card: Card):
+        self.hand.append(card)
