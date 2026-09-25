@@ -32,8 +32,8 @@ class Player:
         return self._pay(difference)
     
     def raise_to(self, new_total):
-        difference = new_total - self._committed_this_round
+        difference = max(0, new_total - self._committed_this_round)
         return self._pay(difference)
         
-    def addCardToHand(self, card: Card):
+    def add_card_to_hand(self, card: Card):
         self._hand.append(card)
