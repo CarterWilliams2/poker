@@ -13,6 +13,7 @@ class Player:
     
     def fold(self):
         self.folded = True
+        self._hand = []
         
     def addCardToHand(self, card: Card):
         self._hand.append(card)
