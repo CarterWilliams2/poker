@@ -20,6 +20,8 @@ class Player:
         amount = min(amount, self._chips)
         self.chips -= amount
         self._committed_this_round += amount
+        
+        return amount
     
     def fold(self):
         self.folded = True
@@ -27,11 +29,11 @@ class Player:
     
     def call(self, table_bet):
         difference = table_bet - self._committed_this_round
-        self._pay(difference)
+        return self._pay(difference)
     
     def raise_to(self, new_total):
         difference = new_total - self._committed_this_round
-        self._pay(difference)
+        return self._pay(difference)
         
     def addCardToHand(self, card: Card):
         self._hand.append(card)
