@@ -16,5 +16,5 @@ class Game:
     def dealToAllPlayers(self):
         for _ in range(2):
             for player in self.players:
-                self.deal(self, player)
+                self.deal(player)
     
