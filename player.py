@@ -4,8 +4,7 @@ class Player:
         self.name = name
         self._chips = chips
         self._hand: list[Card] = []
-        self._current_bet = 0
-        self.committed_this_round
+        self.committed_this_round = 0
         self.folded = False
     
     @property
@@ -20,6 +19,14 @@ class Player:
     def fold(self):
         self.folded = True
         self._hand = []
+    
+    def call(self, table_bet):
+        difference = table_bet - self.committed_this_round
+        self._pay(difference)
+    
+    def raise_to(self, new_total):
+        difference = new_total - self.committed_this_round
+        self._pay(difference)
         
     def addCardToHand(self, card: Card):
         self._hand.append(card)
