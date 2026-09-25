@@ -37,3 +37,11 @@ class Player:
         
     def add_card_to_hand(self, card: Card):
         self._hand.append(card)
+
+    def start_new_round(self):
+        self._committed_this_round = 0
+
+    def start_new_hand(self):
+        self.start_new_round()
+        self.folded = False
+        self._hand = []
