@@ -4,7 +4,7 @@ class Player:
         self.name = name
         self.chips = chips
         self._hand: list[Card] = []
-        self.current_bet = None
+        self.current_bet = 0
         self.folded = False
     
     @property
