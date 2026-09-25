@@ -2,9 +2,9 @@ from card import Card
 class Player:
     def __init__(self, name, chips):
         self.name = name
-        self.chips = chips
+        self._chips = chips
         self._hand: list[Card] = []
-        self.current_bet = 0
+        self._current_bet = 0
         self.committed_this_round
         self.folded = False
     
