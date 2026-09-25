@@ -5,11 +5,17 @@ class Player:
         self.chips = chips
         self._hand: list[Card] = []
         self.current_bet = 0
+        self.committed_this_round
         self.folded = False
     
     @property
     def hand(self):
         return list(self._hand)
+    
+    def _pay(self, amount):
+        amount = min(amount, self.chips)
+        self.chips -= amount
+        self.committed_this_round += amount
     
     def fold(self):
         self.folded = True
