@@ -159,19 +159,42 @@ class Game:
             return True
         return False
 
+    def _build_pots(self, in_hand: list[Player]):
+        pots = []
+        previous = 0
+        for level in sorted({p.committed_this_hand for p in in_hand}):
+            amount = sum(min(p.committed_this_hand, level) - min(p.committed_this_hand, previous)
+                         for p in self._seated)
+            eligible = [p for p in in_hand if p.committed_this_hand >= level]
+            if amount > 0:
+                pots.append((amount, eligible))
+            previous = level
+        # Chips folded players put in above every remaining player's total go to the last pot.
+        leftover = self._pot - sum(amount for amount, _ in pots)
+        last_amount, last_eligible = pots[-1]
+        pots[-1] = (last_amount + leftover, last_eligible)
+        return pots
+
     def _award_pot(self):
         left_of_button = self._seated[1:] + self._seated[:1]
-        winners = [p for p in left_of_button if not p.folded]
-        if len(winners) > 1:
-            scores = {p: evaluate(p.hand + self._community_cards) for p in winners}
-            best = max(scores.values())
-            winners = [p for p in winners if scores[p] == best]
-        share, remainder = divmod(self._pot, len(winners))
-        for player in winners:
-            player.collect(share)
-        winners[0].collect(remainder)
+        in_hand = [p for p in left_of_button if not p.folded]
+        scores = {}
+        if len(in_hand) > 1:
+            scores = {p: evaluate(p.hand + self._community_cards) for p in in_hand}
+
+        results = []
+        for amount, eligible in self._build_pots(in_hand):
+            winners = eligible
+            if len(eligible) > 1:
+                best = max(scores[p] for p in eligible)
+                winners = [p for p in eligible if scores[p] == best]
+            share, remainder = divmod(amount, len(winners))
+            for player in winners:
+                player.collect(share)
+            winners[0].collect(remainder)
+            results.append((amount, winners))
         self._pot = 0
-        return winners
+        return results
 
     def shuffle_deck(self):
         self._deck.shuffle_deck()
