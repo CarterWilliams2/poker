@@ -32,10 +32,6 @@ jobs:
           ref: refs/pull/${{ github.event.issue.number }}/head
           path: pr-head
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
       - name: Review with Claude
         uses: anthropics/claude-code-action@v1
         with:
@@ -48,10 +44,7 @@ jobs:
             instructions, with these differences for running in CI:
 
             - The pull request's code is already checked out in the pr-head directory. Read the
-              code there and don't create a git worktree.
-            - Start every python3 -c script with
-              `import sys; sys.path.insert(0, "pr-head")`
-              so it imports the pull request's modules.
+              code there.
             - Get the PR's description and diff with gh pr view and gh pr diff.
             - When you're done, post your report as a single comment with
               `gh pr comment ${{ github.event.issue.number }} --body-file -`.
@@ -61,4 +54,4 @@ jobs:
           claude_args: |
             --add-dir pr-head
             --max-turns 40
-            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(python3:*)"
+            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
