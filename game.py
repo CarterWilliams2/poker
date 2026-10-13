@@ -87,6 +87,52 @@ class Game:
         self._current_bet = self._big_blind
         self._min_raise = self._big_blind
 
+    def _can_act(self, player: Player):
+        return not player.folded and player.chips > 0
+
+    def _count_in_hand(self):
+        return len([p for p in self._seated if not p.folded])
+
+    def _run_betting_round(self, first_index: int):
+        count = len(self._seated)
+        order = [self._seated[(first_index + i) % count] for i in range(count)]
+        to_act = [p for p in order if self._can_act(p)]
+        while to_act and self._count_in_hand() > 1:
+            player = to_act.pop(0)
+            others_can_act = any(self._can_act(p) for p in self._seated if p is not player)
+            if not others_can_act and player.committed_this_round >= self._current_bet:
+                break
+            if self._apply_action(player):
+                position = order.index(player)
+                after = order[position + 1:] + order[:position]
+                to_act = [p for p in after if self._can_act(p)]
+
+    def _is_legal(self, player: Player, action: Action, amount: int):
+        if action == Action.CHECK:
+            return player.committed_this_round == self._current_bet
+        if action == Action.RAISE:
+            all_in_total = player.committed_this_round + player.chips
+            if amount > all_in_total or amount <= self._current_bet:
+                return False
+            return amount >= self._current_bet + self._min_raise or amount == all_in_total
+        return True
+
+    def _apply_action(self, player: Player):
+        action, amount = self._get_action(player, self)
+        while not self._is_legal(player, action, amount):
+            action, amount = self._get_action(player, self)
+
+        if action == Action.FOLD:
+            player.fold()
+        elif action == Action.CALL:
+            self._pot += player.call(self._current_bet)
+        elif action == Action.RAISE:
+            self._min_raise = max(self._min_raise, amount - self._current_bet)
+            self._current_bet = amount
+            self._pot += player.raise_to(amount)
+            return True
+        return False
+
     def shuffle_deck(self):
         self._deck.shuffle_deck()
 
