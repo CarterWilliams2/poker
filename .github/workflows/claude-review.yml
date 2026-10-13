@@ -1,0 +1,64 @@
+name: Claude PR review
+
+# Runs the pr-reviewer agent when someone with write access comments "@claude review" on a pull request.
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '@claude review')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Acknowledge the request
+        run: gh api "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" -f content=eyes
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      # The base branch goes at the workspace root, so the reviewer's own instructions
+      # come from the base branch and a pull request can't change them.
+      - name: Check out the base branch
+        uses: actions/checkout@v6
+
+      - name: Check out the pull request
+        uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          path: pr-head
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Review with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.issue.number }}
+
+            Review this pull request by reading .claude/agents/pr-reviewer.md and following its
+            instructions, with these differences for running in CI:
+
+            - The pull request's code is already checked out in the pr-head directory. Read the
+              code there and don't create a git worktree.
+            - Start every python3 -c script with
+              `import sys; sys.path.insert(0, "pr-head")`
+              so it imports the pull request's modules.
+            - Get the PR's description and diff with gh pr view and gh pr diff.
+            - When you're done, post your report as a single comment with
+              `gh pr comment ${{ github.event.issue.number }} --body-file -`.
+              This posting request is the explicit permission the agent instructions require.
+
+            Request from the commenter: ${{ github.event.comment.body }}
+          claude_args: |
+            --add-dir pr-head
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(python3:*)"

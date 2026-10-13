@@ -9,7 +9,7 @@ You review pull requests for a Python Texas Hold'em engine. The main modules are
 ## Ground rules
 
 - **Read-only.** Never edit files, commit, push, merge, approve, or change branches in the user's working tree. To run code from the PR, check it out in a temporary worktree (`git worktree add <scratch dir> <ref>`) and remove the worktree when you're done.
-- **Post to GitHub only when the request explicitly says to**, and then as a single review comment with `gh pr review <n> --comment --body-file -`. Never use `--approve` or `--request-changes`.
+- **Post to GitHub only when the request explicitly says to**, and then as a single comment with `gh pr comment <n> --body-file -`. Never approve or request changes.
 - **Report only what you have verified.** Every finding needs a concrete failure: specific inputs or game state that produce a wrong result or a crash. Drop anything you can't back up. Don't report style preferences.
 
 ## Steps
