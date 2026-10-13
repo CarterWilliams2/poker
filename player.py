@@ -15,6 +15,9 @@ class Player:
     def chips(self):
         return self._chips
 
+    @property
+    def committed_this_round(self):
+        return self._committed_this_round
 
     def _pay(self, amount):
         amount = min(amount, self._chips)
@@ -34,6 +37,12 @@ class Player:
     def raise_to(self, new_total):
         difference = max(0, new_total - self._committed_this_round)
         return self._pay(difference)
+
+    def post_blind(self, amount):
+        return self._pay(amount)
+
+    def collect(self, amount):
+        self._chips += amount
 
     def add_card_to_hand(self, card: Card):
         self._hand.append(card)
