@@ -55,6 +55,22 @@ class Game:
     def get_player_count(self):
         return len(self._players)
 
+    def is_over(self):
+        return len([p for p in self._players if p.chips > 0]) < 2
+
+    def play_hand(self):
+        self.start_hand()
+        self._run_betting_round(self._preflop_first_index())
+        for street, deal in [(Street.FLOP, self.flop), (Street.TURN, self.turn), (Street.RIVER, self.river)]:
+            if self._count_in_hand() < 2:
+                break
+            self._street = street
+            deal()
+            self._start_betting_street()
+            self._run_betting_round(1 % len(self._seated))
+        self._street = Street.SHOWDOWN
+        return self._award_pot()
+
     def start_hand(self):
         self._move_button()
         rotated = self._players[self._dealer_index:] + self._players[:self._dealer_index]
@@ -80,12 +96,21 @@ class Game:
     def _small_blind_index(self):
         return 0 if len(self._seated) == 2 else 1
 
+    def _preflop_first_index(self):
+        return (self._small_blind_index() + 2) % len(self._seated)
+
     def _post_blinds(self):
         small_blind_index = self._small_blind_index()
         self._pot += self._seated[small_blind_index].post_blind(self._small_blind)
         self._pot += self._seated[small_blind_index + 1].post_blind(self._big_blind)
         self._current_bet = self._big_blind
         self._min_raise = self._big_blind
+
+    def _start_betting_street(self):
+        self._current_bet = 0
+        self._min_raise = self._big_blind
+        for player in self._seated:
+            player.start_new_round()
 
     def _can_act(self, player: Player):
         return not player.folded and player.chips > 0
@@ -132,6 +157,16 @@ class Game:
             self._pot += player.raise_to(amount)
             return True
         return False
+
+    def _award_pot(self):
+        winners = [p for p in self._seated if not p.folded]
+        # Until hand evaluation exists (step 4), a showdown splits the pot evenly.
+        share, remainder = divmod(self._pot, len(winners))
+        for player in winners:
+            player.collect(share)
+        winners[0].collect(remainder)
+        self._pot = 0
+        return winners
 
     def shuffle_deck(self):
         self._deck.shuffle_deck()
