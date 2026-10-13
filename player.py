@@ -5,6 +5,7 @@ class Player:
         self._chips = chips
         self._hand: list[Card] = []
         self._committed_this_round = 0
+        self._committed_this_hand = 0
         self.folded = False
 
     @property
@@ -19,10 +20,15 @@ class Player:
     def committed_this_round(self):
         return self._committed_this_round
 
+    @property
+    def committed_this_hand(self):
+        return self._committed_this_hand
+
     def _pay(self, amount):
         amount = min(amount, self._chips)
         self._chips -= amount
         self._committed_this_round += amount
+        self._committed_this_hand += amount
 
         return amount
 
@@ -52,5 +58,6 @@ class Player:
 
     def start_new_hand(self):
         self.start_new_round()
+        self._committed_this_hand = 0
         self.folded = False
         self._hand = []
