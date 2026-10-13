@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Callable
 from player import Player
 from deck import Deck
+from hand_evaluator import evaluate
 
 class Street(Enum):
     PREFLOP = "preflop"
@@ -159,8 +160,12 @@ class Game:
         return False
 
     def _award_pot(self):
-        winners = [p for p in self._seated if not p.folded]
-        # Until hand evaluation exists (step 4), a showdown splits the pot evenly.
+        left_of_button = self._seated[1:] + self._seated[:1]
+        winners = [p for p in left_of_button if not p.folded]
+        if len(winners) > 1:
+            scores = {p: evaluate(p.hand + self._community_cards) for p in winners}
+            best = max(scores.values())
+            winners = [p for p in winners if scores[p] == best]
         share, remainder = divmod(self._pot, len(winners))
         for player in winners:
             player.collect(share)
