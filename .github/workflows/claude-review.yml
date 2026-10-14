@@ -1,13 +1,24 @@
 name: Claude PR review
 
-# Runs the pr-reviewer agent when someone with write access comments "@claude review" on a pull request.
+# Runs the pr-reviewer agent when a pull request is opened or marked ready for review, and
+# again whenever someone with write access comments "@claude review" on a pull request.
 on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
   issue_comment:
     types: [created]
 
 jobs:
   review:
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '@claude review')
+    # Pull requests from forks don't get the repo's secrets, so they're only reviewed on request.
+    if: |
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+       github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@claude review'))
+    # One review per pull request at a time; a second request waits for the first to finish.
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -15,8 +26,11 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
     steps:
       - name: Acknowledge the request
+        if: github.event_name == 'issue_comment'
         run: gh api "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" -f content=eyes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -29,7 +43,7 @@ jobs:
       - name: Check out the pull request
         uses: actions/checkout@v6
         with:
-          ref: refs/pull/${{ github.event.issue.number }}/head
+          ref: refs/pull/${{ env.PR_NUMBER }}/head
           path: pr-head
 
       - name: Review with Claude
@@ -38,7 +52,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.issue.number }}
+            PR NUMBER: ${{ env.PR_NUMBER }}
 
             Review this pull request by reading .claude/agents/pr-reviewer.md and following its
             instructions, with these differences for running in CI:
@@ -47,10 +61,10 @@ jobs:
               code there.
             - Get the PR's description and diff with gh pr view and gh pr diff.
             - When you're done, post your report as a single comment with
-              `gh pr comment ${{ github.event.issue.number }} --body-file -`.
+              `gh pr comment ${{ env.PR_NUMBER }} --body-file -`.
               This posting request is the explicit permission the agent instructions require.
 
-            Request from the commenter: ${{ github.event.comment.body }}
+            Request from the commenter: ${{ github.event.comment.body || 'none (automatic review of a new pull request)' }}
           claude_args: |
             --add-dir pr-head
             --max-turns 40
