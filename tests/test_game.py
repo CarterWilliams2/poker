@@ -114,6 +114,32 @@ def test_short_all_in_raise_is_legal(scripted):
     assert a.chips == 40
 
 
+def test_short_all_in_raise_does_not_reopen_betting(scripted):
+    # A raises to 30 and C goes all-in for 35, five short of a full raise. A has to call the
+    # extra five or fold, but can't re-raise.
+    actions = [raise_to(30), FOLD, raise_to(35), raise_to(100), CALL]
+    game, (a, b, c), get_action = make_game([200, 200, 35], actions, scripted)
+    game.play_hand()
+    assert a.committed_this_hand == 35
+    assert get_action.remaining == []
+
+
+def test_short_all_in_raises_that_add_up_to_a_full_raise_reopen_betting(scripted):
+    # A raises to 30. B's all-in to 40 and C's all-in to 50 are each short, but together they
+    # raise A by a full 20, so A may re-raise.
+    seen = []
+    actions = [raise_to(30), raise_to(40), raise_to(50), raise_to(100)]
+
+    def record(player, game):
+        seen.append(player.name)
+        return actions.pop(0)
+
+    a, b, c = Player("A", 200), Player("B", 40), Player("C", 50)
+    Game([a, b, c], 5, 10, record).play_hand()
+    assert seen == ["A", "B", "C", "A"]
+    assert a.committed_this_hand == 100
+
+
 def test_side_pots(scripted):
     # A covers everyone, B covers C. C has the best hand, B the second best.
     deck = "2C KS AS 3D KH AH 4D 9C 9D 9H 5D JS 6D QD"

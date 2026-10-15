@@ -32,6 +32,9 @@ class Game:
         self._pot = 0
         self._current_bet = 0
         self._min_raise = big_blind
+        # The bet each player faced after their last action this round. A raise only reopens
+        # betting for a player once the bet has gone up by at least a full raise since then.
+        self._bet_after_acting: dict[Player, int] = {}
 
     @property
     def community_cards(self):
@@ -123,6 +126,7 @@ class Game:
         count = len(self._seated)
         order = [self._seated[(first_index + i) % count] for i in range(count)]
         to_act = [p for p in order if self._can_act(p)]
+        self._bet_after_acting = {}
         while to_act and self._count_in_hand() > 1:
             player = to_act.pop(0)
             others_can_act = any(self._can_act(p) for p in self._seated if p is not player)
@@ -137,6 +141,9 @@ class Game:
         if action == Action.CHECK:
             return player.committed_this_round == self._current_bet
         if action == Action.RAISE:
+            bet_after_acting = self._bet_after_acting.get(player)
+            if bet_after_acting is not None and self._current_bet - bet_after_acting < self._min_raise:
+                return False
             all_in_total = player.committed_this_round + player.chips
             if amount > all_in_total or amount <= self._current_bet:
                 return False
@@ -148,6 +155,7 @@ class Game:
         while not self._is_legal(player, action, amount):
             action, amount = self._get_action(player, self)
 
+        raised = False
         if action == Action.FOLD:
             player.fold()
         elif action == Action.CALL:
@@ -156,8 +164,9 @@ class Game:
             self._min_raise = max(self._min_raise, amount - self._current_bet)
             self._current_bet = amount
             self._pot += player.raise_to(amount)
-            return True
-        return False
+            raised = True
+        self._bet_after_acting[player] = self._current_bet
+        return raised
 
     def _build_pots(self, in_hand: list[Player]):
         pots = []
