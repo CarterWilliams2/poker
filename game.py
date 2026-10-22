@@ -137,7 +137,7 @@ class Game:
                 after = order[position + 1:] + order[:position]
                 to_act = [p for p in after if self._can_act(p)]
 
-    def _is_legal(self, player: Player, action: Action, amount: int):
+    def is_legal(self, player: Player, action: Action, amount: int):
         if action == Action.CHECK:
             return player.committed_this_round == self._current_bet
         if action == Action.RAISE:
@@ -152,7 +152,7 @@ class Game:
 
     def _apply_action(self, player: Player):
         action, amount = self._get_action(player, self)
-        while not self._is_legal(player, action, amount):
+        while not self.is_legal(player, action, amount):
             action, amount = self._get_action(player, self)
 
         raised = False
