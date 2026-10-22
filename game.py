@@ -137,10 +137,13 @@ class Game:
                 after = order[position + 1:] + order[:position]
                 to_act = [p for p in after if self._can_act(p)]
 
-    def _is_legal(self, player: Player, action: Action, amount: int):
+    def is_legal(self, player: Player, action: Action, amount: int):
         if action == Action.CHECK:
             return player.committed_this_round == self._current_bet
         if action == Action.RAISE:
+            # Once everyone else is all-in or folded, nobody could call a raise.
+            if not any(self._can_act(p) for p in self._seated if p is not player):
+                return False
             bet_after_acting = self._bet_after_acting.get(player)
             if bet_after_acting is not None and self._current_bet - bet_after_acting < self._min_raise:
                 return False
@@ -152,7 +155,7 @@ class Game:
 
     def _apply_action(self, player: Player):
         action, amount = self._get_action(player, self)
-        while not self._is_legal(player, action, amount):
+        while not self.is_legal(player, action, amount):
             action, amount = self._get_action(player, self)
 
         raised = False
