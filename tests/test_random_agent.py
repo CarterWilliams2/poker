@@ -41,7 +41,7 @@ def agent_decision(chips, actions_before, rng):
         decisions.append(RandomAgent(rng)(player, game))
         raise Stop
 
-    players = [Player(name, count) for name, count in zip("ABC", chips)]
+    players = [Player(name, count) for name, count in zip("ABCD", chips)]
     with pytest.raises(Stop):
         Game(players, 5, 10, get_action).play_hand()
     return decisions[0]
@@ -80,9 +80,17 @@ def test_cannot_raise_when_calling_puts_it_all_in():
 
 
 def test_cannot_raise_after_a_short_all_in_raise():
-    # A raises to 30, B folds, C goes all-in for 35. That doesn't reopen betting for A.
+    # D raises to 30, A calls, B folds, C goes all-in for 35. That doesn't reopen betting for D,
+    # even though A still has chips.
     rng = FakeRng()
-    agent_decision([200, 200, 35], [(Action.RAISE, 30), FOLD, (Action.RAISE, 35)], rng)
+    agent_decision([200, 200, 35, 200], [(Action.RAISE, 30), CALL, FOLD, (Action.RAISE, 35)], rng)
+    assert rng.choices == [Action.FOLD, Action.CALL]
+
+
+def test_cannot_raise_when_everyone_else_is_all_in():
+    # C is all-in from the big blind and A folds, so B can only call or fold.
+    rng = FakeRng()
+    agent_decision([200, 200, 10], [FOLD], rng)
     assert rng.choices == [Action.FOLD, Action.CALL]
 
 

@@ -115,29 +115,39 @@ def test_short_all_in_raise_is_legal(scripted):
 
 
 def test_short_all_in_raise_does_not_reopen_betting(scripted):
-    # A raises to 30 and C goes all-in for 35, five short of a full raise. A has to call the
-    # extra five or fold, but can't re-raise.
-    actions = [raise_to(30), FOLD, raise_to(35), raise_to(100), CALL]
-    game, (a, b, c), get_action = make_game([200, 200, 35], actions, scripted)
+    # D raises to 30, A calls, and C goes all-in for 35, five short of a full raise. D has to
+    # call the extra five or fold, but can't re-raise even though A still has chips.
+    actions = [raise_to(30), CALL, FOLD, raise_to(35), raise_to(100), CALL, CALL] + [CHECK] * 6
+    game, (a, b, c, d), get_action = make_game([200, 200, 35, 200], actions, scripted)
     game.play_hand()
-    assert a.committed_this_hand == 35
+    assert d.committed_this_hand == 35
     assert get_action.remaining == []
 
 
 def test_short_all_in_raises_that_add_up_to_a_full_raise_reopen_betting(scripted):
-    # A raises to 30. B's all-in to 40 and C's all-in to 50 are each short, but together they
-    # raise A by a full 20, so A may re-raise.
+    # D raises to 30 and A calls. B's all-in to 40 and C's all-in to 50 are each short, but
+    # together they raise D by a full 20, so D may re-raise A, who still has chips.
     seen = []
-    actions = [raise_to(30), raise_to(40), raise_to(50), raise_to(100)]
+    actions = [raise_to(30), CALL, raise_to(40), raise_to(50), raise_to(100), FOLD]
 
     def record(player, game):
         seen.append(player.name)
         return actions.pop(0)
 
-    a, b, c = Player("A", 200), Player("B", 40), Player("C", 50)
-    Game([a, b, c], 5, 10, record).play_hand()
-    assert seen == ["A", "B", "C", "A"]
-    assert a.committed_this_hand == 100
+    a, b, c, d = Player("A", 200), Player("B", 40), Player("C", 50), Player("D", 200)
+    Game([a, b, c, d], 5, 10, record).play_hand()
+    assert seen == ["D", "A", "B", "C", "D", "A"]
+    assert d.committed_this_hand == 100
+
+
+def test_cannot_raise_when_everyone_else_is_all_in(scripted):
+    # C is all-in from the big blind, so A can call or fold but not raise.
+    actions = [FOLD, raise_to(50), CALL]
+    game, (a, b, c), get_action = make_game([200, 200, 10], actions, scripted)
+    game.play_hand()
+    assert a.committed_this_hand == 0
+    assert b.committed_this_hand == 10
+    assert get_action.remaining == []
 
 
 def test_side_pots(scripted):
