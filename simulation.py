@@ -1,0 +1,70 @@
+from dataclasses import dataclass, field
+from typing import Callable
+from agent import Agent
+from match import Match
+
+@dataclass
+class AgentRecord:
+    """How one agent did across every game it played."""
+    wins: int = 0
+    places: list[int] = field(default_factory=list)
+
+    @property
+    def games(self):
+        return len(self.places)
+
+    @property
+    def win_rate(self):
+        return self.wins / self.games if self.games else 0.0
+
+    @property
+    def average_place(self):
+        return sum(self.places) / self.games if self.games else 0.0
+
+@dataclass
+class SimulationResults:
+    records: dict[str, AgentRecord]
+    games: int = 0
+    # Games stopped by max_hands with two or more players tied for the chip lead, so nobody won.
+    draws: int = 0
+    hands: int = 0
+
+    def ranked(self):
+        """(name, record) pairs from most wins to fewest, then by best average place."""
+        return sorted(self.records.items(), key=lambda item: (-item[1].wins, item[1].average_place))
+
+class Simulation:
+    """Plays many matches between the same agents and counts how often each one wins.
+
+    The seating order rotates every game so no agent always starts on the button. A game
+    stopped by max_hands is won by the chip leader, or is a draw if the lead is tied.
+    """
+
+    def __init__(self, seats: list[tuple[str, Agent]], starting_chips: int,
+                 small_blind: int, big_blind: int, max_hands: int | None = None):
+        # Building one match up front checks the seats the same way every game will.
+        Match(seats, starting_chips, small_blind, big_blind)
+        self._seats = seats
+        self._starting_chips = starting_chips
+        self._small_blind = small_blind
+        self._big_blind = big_blind
+        self._max_hands = max_hands
+
+    def run(self, games: int, on_game: Callable[[int, Match], None] | None = None):
+        results = SimulationResults({name: AgentRecord() for name, _ in self._seats})
+        for number in range(games):
+            shift = number % len(self._seats)
+            seats = self._seats[shift:] + self._seats[:shift]
+            match = Match(seats, self._starting_chips, self._small_blind, self._big_blind)
+            standings = match.run(self._max_hands)
+            results.games += 1
+            results.hands += match.hands_played
+            for place, player in enumerate(standings, start=1):
+                results.records[player.name].places.append(place)
+            if len(standings) > 1 and standings[0].chips == standings[1].chips:
+                results.draws += 1
+            else:
+                results.records[standings[0].name].wins += 1
+            if on_game:
+                on_game(number + 1, match)
+        return results
