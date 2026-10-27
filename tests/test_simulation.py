@@ -13,16 +13,15 @@ def random_seats(count, seed=0):
     return [(f"Bot {i}", RandomAgent(random.Random(seed + i))) for i in range(count)]
 
 
-def shover(player, game):
+def shover(view):
     """Goes all-in whenever it can, otherwise calls."""
-    all_in_total = player.committed_this_round + player.chips
-    if game.is_legal(player, Action.RAISE, all_in_total):
-        return Action.RAISE, all_in_total
+    if view.legal.can_raise:
+        return Action.RAISE, view.legal.max_raise_to
     return CALL
 
 
-def folder(player, game):
-    return CHECK if game.current_bet == player.committed_this_round else FOLD
+def folder(view):
+    return CHECK if view.legal.can_check else FOLD
 
 
 def test_checks_the_seats_up_front():

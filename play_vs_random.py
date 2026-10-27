@@ -2,6 +2,7 @@ from player import Player
 from game import Game, Action, Street
 from hand_evaluator import evaluate, hand_name
 from random_agent import RandomAgent
+from table_view import TableView
 
 def cards_text(cards):
     return ", ".join(card.to_string() for card in cards) or "none"
@@ -74,7 +75,7 @@ def ask_human(table: Table):
 def announce(table: Table, agent: RandomAgent):
     def act(player: Player, game: Game):
         table.show_street(game)
-        action, amount = agent(player, game)
+        action, amount = agent(TableView.for_player(player, game))
         if action == Action.RAISE:
             verb = "bets" if game.current_bet == 0 else "raises to"
             print(f"{player.name} {verb} {amount}.\n")
