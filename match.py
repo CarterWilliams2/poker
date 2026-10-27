@@ -2,6 +2,7 @@ from typing import Callable
 from agent import Agent
 from game import Game, Action
 from player import Player
+from table_view import TableView
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 8
@@ -33,7 +34,7 @@ class Match:
         self.eliminated: list[Player] = []
 
     def _decide(self, player: Player, game: Game):
-        action, amount = self._agents[player](player, game)
+        action, amount = self._agents[player](TableView.for_player(player, game))
         if not game.is_legal(player, action, amount):
             raise IllegalActionError(f"{player.name} tried to {action.value} {amount}.")
         if self._on_action:

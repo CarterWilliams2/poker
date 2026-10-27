@@ -9,7 +9,7 @@ FOLD = (Action.FOLD, 0)
 
 
 def always(action):
-    return lambda player, game: action
+    return lambda view: action
 
 
 def random_seats(count, seed=0):
@@ -31,8 +31,8 @@ def test_each_seat_is_driven_by_its_own_agent():
     asked = []
 
     def agent(name, action):
-        def act(player, game):
-            asked.append((name, player.name))
+        def act(view):
+            asked.append((name, view.name))
             return action
         return act
 

@@ -3,6 +3,7 @@ import pytest
 from game import Action, Game
 from player import Player
 from random_agent import RandomAgent
+from table_view import TableView
 
 FOLD = (Action.FOLD, 0)
 CALL = (Action.CALL, 0)
@@ -38,7 +39,7 @@ def agent_decision(chips, actions_before, rng):
     def get_action(player, game):
         if queue:
             return queue.pop(0)
-        decisions.append(RandomAgent(rng)(player, game))
+        decisions.append(RandomAgent(rng)(TableView.for_player(player, game)))
         raise Stop
 
     players = [Player(name, count) for name, count in zip("ABCD", chips)]
@@ -98,7 +99,7 @@ def test_random_agents_only_make_legal_actions_until_the_game_ends():
     agent = RandomAgent(random.Random(7))
 
     def checked(player, game):
-        action, amount = agent(player, game)
+        action, amount = agent(TableView.for_player(player, game))
         assert game.is_legal(player, action, amount)
         return action, amount
 

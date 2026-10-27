@@ -1,6 +1,6 @@
 import random
-from game import Game, Action
-from player import Player
+from game import Action
+from table_view import TableView
 
 class RandomAgent:
     """Picks uniformly among its legal actions, and raises to a uniformly random legal total."""
@@ -8,17 +8,13 @@ class RandomAgent:
     def __init__(self, rng: random.Random | None = None):
         self._rng = rng or random.Random()
 
-    def __call__(self, player: Player, game: Game):
-        all_in_total = player.committed_this_round + player.chips
-        if game.current_bet > player.committed_this_round:
-            choices = [Action.FOLD, Action.CALL]
-        else:
-            choices = [Action.CHECK]
-        if game.is_legal(player, Action.RAISE, all_in_total):
+    def __call__(self, view: TableView):
+        legal = view.legal
+        choices = [Action.FOLD, Action.CALL] if legal.can_call else [Action.CHECK]
+        if legal.can_raise:
             choices.append(Action.RAISE)
 
         action = self._rng.choice(choices)
         if action != Action.RAISE:
             return action, 0
-        smallest = min(game.current_bet + game.min_raise, all_in_total)
-        return action, self._rng.randint(smallest, all_in_total)
+        return action, self._rng.randint(legal.min_raise_to, legal.max_raise_to)

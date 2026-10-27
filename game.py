@@ -35,6 +35,9 @@ class Game:
         # The bet each player faced after their last action this round. A raise only reopens
         # betting for a player once the bet has gone up by at least a full raise since then.
         self._bet_after_acting: dict[Player, int] = {}
+        # Every decision made this hand, in order, as (player, street, action, amount). The amount
+        # is the player's total bet this round after a call or raise, and 0 for a check or fold.
+        self._history: list[tuple[Player, Street, Action, int]] = []
 
     @property
     def community_cards(self):
@@ -55,6 +58,23 @@ class Game:
     @property
     def street(self):
         return self._street
+
+    @property
+    def small_blind(self):
+        return self._small_blind
+
+    @property
+    def big_blind(self):
+        return self._big_blind
+
+    @property
+    def seated(self):
+        """Players dealt into this hand, starting from the button."""
+        return list(self._seated)
+
+    @property
+    def history(self):
+        return list(self._history)
 
     def get_player_count(self):
         return len(self._players)
@@ -84,6 +104,7 @@ class Game:
         self._community_cards = []
         self._pot = 0
         self._street = Street.PREFLOP
+        self._history = []
         for player in self._players:
             player.start_new_hand()
         self._post_blinds()
@@ -169,6 +190,8 @@ class Game:
             self._pot += player.raise_to(amount)
             raised = True
         self._bet_after_acting[player] = self._current_bet
+        total = player.committed_this_round if action in (Action.CALL, Action.RAISE) else 0
+        self._history.append((player, self._street, action, total))
         return raised
 
     def _build_pots(self, in_hand: list[Player]):
