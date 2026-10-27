@@ -1,12 +1,14 @@
 import argparse
 import random
 from match import MIN_PLAYERS, MAX_PLAYERS
+from hand_strength_agent import HandStrengthAgent
 from random_agent import RandomAgent
 from simulation import Simulation
 
 # Agents that can be picked by name. New agents (an AI agent, say) get added here.
 AGENTS = {
     "random": lambda rng: RandomAgent(rng),
+    "strength": lambda rng: HandStrengthAgent(rng),
 }
 
 def main():
