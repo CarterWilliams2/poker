@@ -3,42 +3,12 @@ import pytest
 from card import Card
 from game import Action, Game, Street
 from player import Player
-from table_view import ActionRecord, LegalActions, SeatView, TableView
-from conftest import stack_deck
+from table_view import ActionRecord, LegalActions, SeatView
+from conftest import LOOK, view_at
 
 FOLD = (Action.FOLD, 0)
 CHECK = (Action.CHECK, 0)
 CALL = (Action.CALL, 0)
-LOOK = None
-
-# Three-handed with the button on A: B posts the small blind, C the big blind, and A acts
-# first preflop. Cards are dealt A B C A B C, then burn + flop, burn + turn, burn + river.
-DECK = "AS KS 2C AH KH 7D 3D AD 9C 4S 5D JH 6D 8C"
-
-
-class Stop(Exception):
-    pass
-
-
-def view_at(chips, actions):
-    """Plays the actions up to the LOOK marker and returns the view of whoever acts there."""
-    queue = list(actions)
-    views = []
-
-    def get_action(player, game):
-        action = queue.pop(0)
-        if action is LOOK:
-            views.append(TableView.for_player(player, game))
-            raise Stop
-        return action
-
-    players = [Player(name, count) for name, count in zip("ABC", chips)]
-    game = Game(players, 5, 10, get_action)
-    stack_deck(game, DECK)
-    with pytest.raises(Stop):
-        game.play_hand()
-    return views[0]
-
 
 def names(cards):
     return [card.value + card.suit for card in cards]
