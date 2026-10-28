@@ -1,3 +1,4 @@
+import random
 from enum import Enum
 from typing import Callable
 from player import Player
@@ -19,9 +20,11 @@ class Action(Enum):
 
 class Game:
     def __init__(self, players: list[Player], small_blind: int, big_blind: int,
-                 get_action: Callable[[Player, "Game"], tuple[Action, int]]):
+                 get_action: Callable[[Player, "Game"], tuple[Action, int]],
+                 rng: random.Random | None = None):
         self._players = players
-        self._deck = Deck()
+        # Shuffles the deck. Pass a seeded one for repeatable deals.
+        self._deck = Deck(rng)
         self._community_cards = []
         self._small_blind = small_blind
         self._big_blind = big_blind

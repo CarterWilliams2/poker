@@ -17,8 +17,6 @@ def main():
         parser.error(f"--players must be {MIN_PLAYERS} to {MAX_PLAYERS}")
 
     rng = random.Random(args.seed)
-    if args.seed is not None:
-        random.seed(args.seed)  # The deck shuffles with the global random module.
     seats = [(f"Bot {i + 1}", RandomAgent(random.Random(rng.random()))) for i in range(args.players)]
 
     def on_action(player, action, amount, game):
@@ -42,7 +40,7 @@ def main():
     reported = set()
     headed = set()
     match = Match(seats, args.chips, small_blind=1, big_blind=2,
-                  on_action=on_action if args.verbose else None)
+                  on_action=on_action if args.verbose else None, rng=random.Random(rng.random()))
     standings = match.run(args.max_hands, on_hand)
 
     print(f"\nFinal standings after {match.hands_played} hands:")
