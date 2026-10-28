@@ -1,7 +1,7 @@
 import argparse
 import random
 from match import MIN_PLAYERS, MAX_PLAYERS
-from hand_strength_agent import HandStrengthAgent
+from hand_strength_agent import TUNED_SETTINGS, HandStrengthAgent
 from random_agent import RandomAgent
 from simulation import CashSimulation, Simulation
 
@@ -9,6 +9,7 @@ from simulation import CashSimulation, Simulation
 AGENTS = {
     "random": lambda rng: RandomAgent(rng),
     "strength": lambda rng: HandStrengthAgent(rng),
+    "tuned": lambda rng: HandStrengthAgent(rng, **TUNED_SETTINGS),
 }
 
 def main():

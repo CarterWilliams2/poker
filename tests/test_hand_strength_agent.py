@@ -2,7 +2,7 @@ import dataclasses
 import random
 import pytest
 from game import Action
-from hand_strength_agent import HandStrengthAgent, chen_score, equity
+from hand_strength_agent import TUNED_SETTINGS, HandStrengthAgent, chen_score, equity
 from random_agent import RandomAgent
 from simulation import CashSimulation
 from conftest import LOOK, cards, view_at
@@ -98,7 +98,12 @@ def test_raise_is_at_least_the_minimum():
     # Real pots are never this small, but a pot raise should still never fall below the
     # minimum raise to 20.
     view = dataclasses.replace(view_at([100, 100, 100], [LOOK]), pot=0)
-    assert HandStrengthAgent(random.Random(0))._pot_sized_raise(view) == 20
+    assert HandStrengthAgent(random.Random(0))._raise_to(view) == 20
+
+
+def test_raise_size_scales_the_raise():
+    # Half the pot after calling is 12.5, which rounds to 12 on top of the 10 to call.
+    assert decide([100, 100, 100], [LOOK], raise_size=0.5) == (Action.RAISE, 22)
 
 
 def test_raises_after_the_flop_with_a_strong_hand():
@@ -112,6 +117,13 @@ def test_calls_after_the_flop_when_the_price_is_right():
     # and middle pair against two random hands is well above that, but short of raising.
     actions = [CALL, CALL, CHECK, (Action.RAISE, 30), LOOK]
     assert decide([100, 100, 100], actions, C_SUITED_CONNECTORS) == CALL
+
+
+def test_call_margin_demands_a_better_price():
+    # Middle pair's chance here is about 55%. Asking for 30 points more than the 1 in 3 price
+    # turns the call into a fold.
+    actions = [CALL, CALL, CHECK, (Action.RAISE, 30), LOOK]
+    assert decide([100, 100, 100], actions, C_SUITED_CONNECTORS, call_margin=0.3) == FOLD
 
 
 def test_folds_after_the_flop_when_the_price_is_wrong():
@@ -145,3 +157,9 @@ def test_beats_random_agents_heads_up():
 
 def test_uses_its_own_random_source_by_default():
     assert isinstance(HandStrengthAgent()._rng, random.Random)
+
+
+def test_tuned_settings_build_an_agent():
+    agent = HandStrengthAgent(random.Random(0), **TUNED_SETTINGS)
+    assert agent._call_margin == TUNED_SETTINGS["call_margin"]
+    assert agent._raise_size == TUNED_SETTINGS["raise_size"]
