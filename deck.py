@@ -2,7 +2,8 @@ from card import Card
 import random
 
 class Deck:
-    def __init__(self):
+    def __init__(self, rng: random.Random | None = None):
+        self._rng = rng or random.Random()
         self._cards: list[Card] = []
         self._make_deck()
 
@@ -16,7 +17,7 @@ class Deck:
                 self._cards.append(Card(value, suit))
 
     def shuffle_deck(self):
-        random.shuffle(self._cards)
+        self._rng.shuffle(self._cards)
 
     def get_deck_size(self):
         return len(self._cards)

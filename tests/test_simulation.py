@@ -2,7 +2,8 @@ import random
 import pytest
 from game import Action
 from random_agent import RandomAgent
-from simulation import AgentRecord, Simulation, SimulationResults
+from simulation import (AgentRecord, CashResults, CashSimulation, ChipRecord, Simulation,
+                        SimulationResults)
 
 FOLD = (Action.FOLD, 0)
 CHECK = (Action.CHECK, 0)
@@ -81,3 +82,75 @@ def test_records_with_no_games_are_zero():
     assert record.win_rate == 0
     assert record.average_place == 0
     assert SimulationResults({"A": record}).ranked() == [("A", record)]
+
+
+def test_the_same_seed_plays_the_same_games():
+    def standings(seed):
+        places = []
+        Simulation(random_seats(3), 20, 1, 2, rng=random.Random(seed)).run(
+            3, lambda number, match: places.append([p.name for p in match.standings()]))
+        return places
+
+    assert standings(5) == standings(5)
+
+
+def test_cash_hands_start_from_fresh_stacks():
+    # The shover takes the folder's blind every hand. Fresh stacks mean the folder never busts,
+    # so every hand counts the same.
+    results = CashSimulation([("Shover", shover), ("Folder", folder)], 20, 1, 2,
+                             duplicate=False).run(10)
+    assert results.hands == 10
+    # Each hand the folder either folds its small blind (0.5 big blinds) or, in the big blind,
+    # faces the shove and folds 1 big blind. Seats alternate, so that averages to 0.75.
+    assert results.records["Shover"].bb_per_100 == pytest.approx(75)
+    assert results.records["Folder"].bb_per_100 == pytest.approx(-75)
+    assert [name for name, _ in results.ranked()] == ["Shover", "Folder"]
+
+
+def test_duplicate_deals_are_played_once_from_every_seat():
+    seen = set()
+
+    def watcher(view):
+        seen.add((view.name, " ".join(f"{card.value}{card.suit}" for card in view.hand)))
+        return shover(view)
+
+    seats = [("A", watcher), ("B", watcher), ("C", watcher)]
+    results = CashSimulation(seats, 20, 1, 2, rng=random.Random(3)).run(1)
+    assert results.hands == 3
+    assert all(len(record.deals) == 1 for record in results.records.values())
+    # The three replays hand out the same three sets of cards, and each agent gets each one.
+    hands = {hand for _, hand in seen}
+    assert len(hands) == 3
+    assert seen == {(name, hand) for name in "ABC" for hand in hands}
+
+
+def test_duplicate_deals_cancel_out_the_cards_between_equal_agents():
+    # The same deterministic agent in every seat plays each seat once, so everyone breaks even.
+    results = CashSimulation([("A", shover), ("B", shover), ("C", shover)], 20, 1, 2,
+                             rng=random.Random(4)).run(20)
+    assert all(record.bb_per_100 == pytest.approx(0) for record in results.records.values())
+    assert all(record.margin == pytest.approx(0) for record in results.records.values())
+
+
+def test_cash_progress_is_reported_after_each_deal():
+    numbers = []
+    CashSimulation(random_seats(2), 20, 1, 2).run(3, numbers.append)
+    assert numbers == [1, 2, 3]
+
+
+def test_cash_simulation_checks_the_seats_up_front():
+    with pytest.raises(ValueError, match="2 to 8"):
+        CashSimulation(random_seats(1), 100, 1, 2)
+
+
+def test_the_margin_shrinks_as_deals_add_up():
+    assert ChipRecord([1.0]).margin == float("inf")
+    assert ChipRecord([1.0, -1.0] * 2).margin > ChipRecord([1.0, -1.0] * 50).margin
+    assert ChipRecord([0.5, 1.5]).bb_per_100 == 100
+
+
+def test_chip_records_with_no_deals_are_zero():
+    record = ChipRecord()
+    assert record.bb_per_100 == 0
+    assert record.margin == float("inf")
+    assert CashResults({"A": record}).ranked() == [("A", record)]

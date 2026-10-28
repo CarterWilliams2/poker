@@ -1,3 +1,4 @@
+import random
 from typing import Callable
 from agent import Agent
 from game import Game, Action
@@ -15,11 +16,13 @@ class Match:
 
     Every seat is driven by an agent, so the same match works for random bots now and AI
     agents later. on_action is called after each decision with (player, action, amount, game).
+    rng shuffles the deck; pass a seeded one for repeatable deals.
     """
 
     def __init__(self, seats: list[tuple[str, Agent]], starting_chips: int,
                  small_blind: int, big_blind: int,
-                 on_action: Callable[[Player, Action, int, Game], None] | None = None):
+                 on_action: Callable[[Player, Action, int, Game], None] | None = None,
+                 rng: random.Random | None = None):
         if not MIN_PLAYERS <= len(seats) <= MAX_PLAYERS:
             raise ValueError(f"A match needs {MIN_PLAYERS} to {MAX_PLAYERS} players, got {len(seats)}.")
         names = [name for name, _ in seats]
@@ -28,7 +31,7 @@ class Match:
         self.players = [Player(name, starting_chips) for name in names]
         self._agents = {player: agent for player, (_, agent) in zip(self.players, seats)}
         self._on_action = on_action
-        self.game = Game(self.players, small_blind, big_blind, self._decide)
+        self.game = Game(self.players, small_blind, big_blind, self._decide, rng)
         self.hands_played = 0
         # Busted players, in the order they ran out of chips.
         self.eliminated: list[Player] = []

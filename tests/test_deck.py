@@ -1,3 +1,4 @@
+import random
 from deck import Deck
 
 
@@ -27,9 +28,15 @@ def test_reset_cards_restores_a_full_deck():
     assert deck.get_deck_size() == 52
 
 
-def test_shuffle_keeps_the_same_cards(monkeypatch):
+def test_shuffle_keeps_the_same_cards():
     deck = Deck()
     before = _keys(deck)
-    monkeypatch.setattr("random.shuffle", lambda items: items.reverse())
     deck.shuffle_deck()
-    assert _keys(deck) == list(reversed(before))
+    assert sorted(_keys(deck)) == sorted(before)
+
+
+def test_the_same_seed_shuffles_the_same_way():
+    first, second = Deck(random.Random(7)), Deck(random.Random(7))
+    first.shuffle_deck()
+    second.shuffle_deck()
+    assert _keys(first) == _keys(second)

@@ -123,10 +123,9 @@ def test_settings_change_the_thresholds():
 
 
 def test_beats_random_agents_heads_up():
-    random.seed(0)
     seats = [("Strength", HandStrengthAgent(random.Random(1), samples=30)),
              ("Random", RandomAgent(random.Random(2)))]
-    results = Simulation(seats, 50, 1, 2, max_hands=300).run(40)
+    results = Simulation(seats, 50, 1, 2, max_hands=300, rng=random.Random(0)).run(40)
     assert results.records["Strength"].wins > results.records["Random"].wins
 
 
