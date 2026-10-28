@@ -2,9 +2,9 @@ import dataclasses
 import random
 import pytest
 from game import Action
-from hand_strength_agent import HandStrengthAgent, chen_score, hand_strength
+from hand_strength_agent import HandStrengthAgent, chen_score, equity
 from random_agent import RandomAgent
-from simulation import Simulation
+from simulation import CashSimulation
 from conftest import LOOK, cards, view_at
 
 FOLD = (Action.FOLD, 0)
@@ -36,19 +36,32 @@ def test_chen_score(hand, expected):
     assert chen_score(cards(hand)) == expected
 
 
-def test_hand_strength_is_certain_with_an_unbeatable_hand():
-    assert hand_strength(cards("AS AH"), cards("AD AC 4S"), 3, 50, random.Random(0)) == 1
+def test_equity_is_certain_with_an_unbeatable_hand():
+    # Four aces on the turn: only a straight flush could beat them, and no card left makes one.
+    assert equity(cards("AS AH"), cards("AD AC 4S 9H"), 3, 50, random.Random(0)) == 1
 
 
-def test_hand_strength_counts_ties_as_half():
+def test_equity_counts_ties_as_half():
     # Everyone plays the royal flush on the board.
-    assert hand_strength(cards("2C 3D"), cards("AS KS QS JS 10S"), 2, 50, random.Random(0)) == 0.5
+    assert equity(cards("2C 3D"), cards("AS KS QS JS 10S"), 2, 50, random.Random(0)) == 0.5
 
 
-def test_hand_strength_drops_with_more_opponents():
-    one = hand_strength(cards("QS QH"), cards("2D 7C 8S"), 1, 200, random.Random(0))
-    three = hand_strength(cards("QS QH"), cards("2D 7C 8S"), 3, 200, random.Random(0))
+def test_equity_drops_with_more_opponents():
+    one = equity(cards("QS QH"), cards("2D 7C 8S"), 1, 200, random.Random(0))
+    three = equity(cards("QS QH"), cards("2D 7C 8S"), 3, 200, random.Random(0))
     assert one > three
+
+
+def test_equity_counts_draws():
+    # Nine high with four hearts is behind almost every hand right now, but makes a flush on
+    # about a third of turns and rivers, so its equity heads-up is well over that.
+    assert equity(cards("9H 8H"), cards("2H 5H KC"), 1, 400, random.Random(0)) > 0.45
+
+
+def test_a_missed_draw_is_worth_little_on_the_river():
+    # The same draw once the turn and river have missed: just nine high, with nothing to come.
+    river = cards("2H 5H KC JS 3D")
+    assert equity(cards("9H 8H"), river, 1, 400, random.Random(0)) < 0.2
 
 
 def test_raises_a_strong_hand_by_the_pot():
@@ -109,7 +122,7 @@ def test_folds_after_the_flop_when_the_price_is_wrong():
 
 def test_folded_players_do_not_count_as_opponents(monkeypatch):
     counts = []
-    monkeypatch.setattr("hand_strength_agent.hand_strength",
+    monkeypatch.setattr("hand_strength_agent.equity",
                         lambda hand, board, opponents, samples, rng: counts.append(opponents) or 0)
     # A raises, B calls and C folds, so on the flop B faces one opponent.
     decide([100, 100, 100], [(Action.RAISE, 30), CALL, FOLD, LOOK])
@@ -125,8 +138,9 @@ def test_settings_change_the_thresholds():
 def test_beats_random_agents_heads_up():
     seats = [("Strength", HandStrengthAgent(random.Random(1), samples=30)),
              ("Random", RandomAgent(random.Random(2)))]
-    results = Simulation(seats, 50, 1, 2, max_hands=300, rng=random.Random(0)).run(40)
-    assert results.records["Strength"].wins > results.records["Random"].wins
+    record = CashSimulation(seats, 100, 1, 2, rng=random.Random(0)).run(80).records["Strength"]
+    # Ahead by more than the margin of error, not just ahead.
+    assert record.bb_per_100 - record.margin > 0
 
 
 def test_uses_its_own_random_source_by_default():

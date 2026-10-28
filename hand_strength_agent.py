@@ -21,21 +21,24 @@ def chen_score(hand: list[Card]):
         points += 1
     return math.ceil(points)
 
-def hand_strength(hand: list[Card], board: list[Card], opponents: int, samples: int,
-                  rng: random.Random):
-    """Estimates the chance this hand is best right now, against opponents holding random cards.
+def equity(hand: list[Card], board: list[Card], opponents: int, samples: int,
+           rng: random.Random):
+    """Estimates the chance this hand wins at showdown, against opponents holding random cards.
 
-    It doesn't count cards still to come, so draws are worth nothing until they hit. Ties count
-    as half a win.
+    Each sample deals the opponents' cards and the rest of the board, so draws count for the
+    times they hit. Ties count as half a win.
     """
     seen = {(card.value, card.suit) for card in hand + board}
     unseen = [Card(value, suit) for value in VALUE_RANKS for suit in SUITS
               if (value, suit) not in seen]
-    mine = evaluate(hand + board)
+    to_come = 5 - len(board)
     total = 0.0
     for _ in range(samples):
-        dealt = rng.sample(unseen, 2 * opponents)
-        best = max(evaluate(dealt[i:i + 2] + board) for i in range(0, len(dealt), 2))
+        dealt = rng.sample(unseen, 2 * opponents + to_come)
+        final_board = board + dealt[:to_come]
+        mine = evaluate(hand + final_board)
+        best = max(evaluate(dealt[i:i + 2] + final_board)
+                   for i in range(to_come, len(dealt), 2))
         total += 1.0 if mine > best else 0.5 if mine == best else 0.0
     return total / samples
 
@@ -44,7 +47,8 @@ class HandStrengthAgent:
     otherwise checks or folds.
 
     Before the flop it rates its cards with the Chen formula. After the flop it estimates its
-    chance of holding the best hand by dealing random cards to the players still in.
+    equity, its chance of winning at showdown, by dealing random cards to the players still in
+    and to the rest of the board.
     """
 
     def __init__(self, rng: random.Random | None = None, preflop_raise: int = 10,
@@ -62,11 +66,11 @@ class HandStrengthAgent:
             should_call = score >= self._preflop_call
         else:
             opponents = len([seat for seat in view.opponents if not seat.folded])
-            strength = hand_strength(list(view.hand), list(view.community_cards), opponents,
-                                     self._samples, self._rng)
-            should_raise = strength >= self._postflop_raise
+            chance = equity(list(view.hand), list(view.community_cards), opponents,
+                            self._samples, self._rng)
+            should_raise = chance >= self._postflop_raise
             # Calling pays when the chance of winning beats the share of the final pot it costs.
-            should_call = strength > view.legal.to_call / (view.pot + view.legal.to_call)
+            should_call = chance > view.legal.to_call / (view.pot + view.legal.to_call)
 
         legal = view.legal
         if should_raise and legal.can_raise:
