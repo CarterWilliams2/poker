@@ -1,5 +1,8 @@
+import random
+from itertools import combinations
 import pytest
-from hand_evaluator import HandRank, evaluate, hand_name, score_five
+from card import Card
+from hand_evaluator import HandRank, VALUE_RANKS, evaluate, hand_name, score_five
 from conftest import cards
 
 
@@ -28,6 +31,43 @@ def test_higher_kicker_wins():
 def test_evaluate_picks_the_best_five_of_seven():
     score = evaluate(cards("2C 3D 4H 5S 6C KD KH"))
     assert score == (HandRank.STRAIGHT, 6)
+
+
+@pytest.mark.parametrize("hand, expected", [
+    # A flush and a straight in different cards aren't a straight flush.
+    ("2H 5H 9H JH KH 10C QD", (HandRank.FLUSH, 13, 11, 9, 5, 2)),
+    ("AH 2H 3H 4H 5H 6H KC", (HandRank.STRAIGHT_FLUSH, 6)),
+    ("AD 2D 3D 4D 5D KC QC", (HandRank.STRAIGHT_FLUSH, 5)),
+    # The best kicker for quads can come from a pair.
+    ("9C 9D 9H 9S KC KD 2C", (HandRank.FOUR_OF_A_KIND, 9, 13)),
+    # Two sets make a full house with the lower set as the pair.
+    ("7C 7D 7H 4S 4C 4D AC", (HandRank.FULL_HOUSE, 7, 4)),
+    ("7C 7D 7H 4S 4C KD KC", (HandRank.FULL_HOUSE, 7, 13)),
+    # With three pairs, the third pair's rank can be the kicker.
+    ("JC JD 8H 8S 5C 5D 2C", (HandRank.TWO_PAIR, 11, 8, 5)),
+    ("AC KD QH JS 10C 9D 8H", (HandRank.STRAIGHT, 14)),
+    ("AC 2D 3H 4S 5C KD KH", (HandRank.STRAIGHT, 5)),
+    ("7C 7D 7H KS 2C 4D 9H", (HandRank.THREE_OF_A_KIND, 7, 13, 9)),
+    ("QC QD 9H 4S 2C JD 3H", (HandRank.PAIR, 12, 11, 9, 4)),
+    ("AC QD 9H 4S 2C 7D 3H", (HandRank.HIGH_CARD, 14, 12, 9, 7, 4)),
+])
+def test_evaluate_seven_cards(hand, expected):
+    assert evaluate(cards(hand)) == expected
+
+
+def test_evaluate_matches_scoring_every_five_card_combination():
+    # Drawing from a few ranks and suits at a time makes rare hands like quads, straight
+    # flushes and two sets common enough to check.
+    rng = random.Random(0)
+    for _ in range(3000):
+        ranks = rng.sample(list(VALUE_RANKS), rng.randint(2, 13))
+        suits = rng.sample("HDCS", rng.randint(1, 4))
+        pool = [Card(value, suit) for value in ranks for suit in suits]
+        if len(pool) < 5:
+            continue
+        hand = rng.sample(pool, rng.randint(5, min(7, len(pool))))
+        best = max(score_five(list(combo)) for combo in combinations(hand, 5))
+        assert evaluate(hand) == best
 
 
 @pytest.mark.parametrize("rank, name", [

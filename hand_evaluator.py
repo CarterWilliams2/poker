@@ -1,6 +1,5 @@
 from collections import Counter
 from enum import IntEnum
-from itertools import combinations
 from card import Card
 
 VALUE_RANKS = {"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
@@ -54,8 +53,56 @@ def score_five(cards: list[Card]) -> tuple:
         return (HandRank.PAIR, *tiebreak)
     return (HandRank.HIGH_CARD, *tiebreak)
 
+def _best_straight_high(ranks: set[int]):
+    """The top card of the highest straight among these ranks, or None. An ace also plays low."""
+    if 14 in ranks:
+        ranks = ranks | {1}
+    for high in range(14, 4, -1):
+        if all(rank in ranks for rank in range(high - 4, high + 1)):
+            return high
+    return None
+
 def evaluate(cards: list[Card]) -> tuple:
-    return max(score_five(list(combo)) for combo in combinations(cards, 5))
+    """Scores the best five-card hand among five to seven cards, the same as score_five would
+    score it. Bigger scores are better hands.
+
+    It works from rank counts and suits instead of scoring every five-card combination, which is
+    many times faster. Hand strength estimates call it thousands of times a decision.
+    """
+    counts: dict[int, int] = {}
+    by_suit: dict[str, list[int]] = {}
+    for card in cards:
+        value = VALUE_RANKS[card.value]
+        counts[value] = counts.get(value, 0) + 1
+        by_suit.setdefault(card.suit, []).append(value)
+
+    flush = next((values for values in by_suit.values() if len(values) >= 5), None)
+    if flush:
+        high = _best_straight_high(set(flush))
+        if high is not None:
+            return (HandRank.STRAIGHT_FLUSH, high)
+
+    # Ranks from the most copies to the fewest, then from high to low. Five cards always hold at
+    # least two ranks.
+    groups = sorted(counts, key=lambda value: (counts[value], value), reverse=True)
+    top, top_count = groups[0], counts[groups[0]]
+    second_count = counts[groups[1]]
+    if top_count == 4:
+        return (HandRank.FOUR_OF_A_KIND, top, max(groups[1:]))
+    if top_count == 3 and second_count >= 2:
+        return (HandRank.FULL_HOUSE, top, groups[1])
+    if flush:
+        return (HandRank.FLUSH, *sorted(flush, reverse=True)[:5])
+    high = _best_straight_high(set(counts))
+    if high is not None:
+        return (HandRank.STRAIGHT, high)
+    if top_count == 3:
+        return (HandRank.THREE_OF_A_KIND, top, *sorted(groups[1:], reverse=True)[:2])
+    if second_count == 2:
+        return (HandRank.TWO_PAIR, top, groups[1], max(groups[2:]))
+    if top_count == 2:
+        return (HandRank.PAIR, top, *sorted(groups[1:], reverse=True)[:3])
+    return (HandRank.HIGH_CARD, *sorted(groups, reverse=True)[:5])
 
 def hand_name(score: tuple):
     return HandRank(score[0]).name.replace("_", " ").title()
