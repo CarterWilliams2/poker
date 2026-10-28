@@ -6,7 +6,7 @@ addopts = "--cov --cov-report=term-missing"
 [tool.coverage.run]
 branch = true
 source = ["."]
-omit = ["tests/*", "main.py", "play_vs_random.py", "play_bots.py", "simulate.py", ".venv/*"]
+omit = ["tests/*", "main.py", "play_vs_random.py", "play_bots.py", "simulate.py", "tune.py", ".venv/*"]
 
 [tool.coverage.report]
 fail_under = 100
