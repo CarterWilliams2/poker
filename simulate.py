@@ -1,5 +1,7 @@
 import argparse
 import random
+from aggressive_agent import AggressiveAgent
+from calling_station_agent import CallingStationAgent
 from match import MIN_PLAYERS, MAX_PLAYERS
 from hand_strength_agent import TUNED_SETTINGS, HandStrengthAgent
 from random_agent import RandomAgent
@@ -8,6 +10,8 @@ from simulation import CashSimulation, Simulation
 # Agents that can be picked by name. New agents (an AI agent, say) get added here.
 AGENTS = {
     "random": lambda rng: RandomAgent(rng),
+    "calling": lambda rng: CallingStationAgent(),
+    "aggressive": lambda rng: AggressiveAgent(),
     "strength": lambda rng: HandStrengthAgent(rng),
     "tuned": lambda rng: HandStrengthAgent(rng, **TUNED_SETTINGS),
 }
