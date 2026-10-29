@@ -7,10 +7,12 @@ from table_view import TableView
 
 SUITS = ["H", "D", "C", "S"]
 
-# Found by tune.py (python3 tune.py --rounds 8 --deals 3000 --seed 1). Heads-up over 10,000
-# fresh duplicate deals, these beat the defaults by 12.3 +/- 3.8 big blinds per 100 hands.
-TUNED_SETTINGS = {"preflop_raise": 10, "preflop_call": 7, "postflop_raise": 0.75,
-                  "call_margin": 0.05, "raise_size": 1.25}
+# Found by tune.py against itself and a random, calling and aggressive agent
+# (python3 tune.py --rounds 8 --deals 2000 --seed 1). Over 10,000 fresh duplicate deals they
+# beat the defaults by 275.6 +/- 12.9 big blinds per 100 hands across that pool, and by 38.3
+# heads-up.
+TUNED_SETTINGS = {"preflop_raise": 10, "preflop_call": 3, "postflop_raise": 0.65,
+                  "call_margin": 0.05, "raise_size": 1.75}
 
 def chen_score(hand: list[Card]):
     """Rates two starting cards with the Chen formula, from -1 (7-2 offsuit) to 20 (aces)."""
