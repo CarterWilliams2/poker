@@ -15,6 +15,10 @@ SUITS = ["H", "D", "C", "S"]
 TUNED_SETTINGS = {"preflop_raise": 10, "preflop_call": 3, "postflop_raise": 0.65,
                   "call_margin": 0.05, "raise_size": 1.75}
 
+# A tight opponent: raises the top 11% of starting hands (a Chen score of 8 or more) and folds
+# everything else before the flop, so its raises really do mean a strong hand.
+TIGHT_SETTINGS = {"preflop_raise": 8, "preflop_call": 8}
+
 def chen_score(hand: list[Card]):
     """Rates two starting cards with the Chen formula, from -1 (7-2 offsuit) to 20 (aces)."""
     high, low = sorted((VALUE_RANKS[card.value] for card in hand), reverse=True)
