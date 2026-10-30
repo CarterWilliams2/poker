@@ -7,7 +7,7 @@ from random_agent import RandomAgent
 from tuning import Parameter, Tuner
 
 DEFAULTS = {"preflop_raise": 10, "preflop_call": 7, "postflop_raise": 0.75,
-            "call_margin": 0.0, "raise_size": 1.0}
+            "call_margin": 0.0, "raise_size": 1.0, "raiser_floor": -1}
 
 PARAMETERS = [
     Parameter("preflop_raise", 1, 5, 20),
@@ -15,6 +15,7 @@ PARAMETERS = [
     Parameter("postflop_raise", 0.05, 0.5, 1.0),
     Parameter("call_margin", 0.05, -0.2, 0.5),
     Parameter("raise_size", 0.25, 0.25, 3.0),
+    Parameter("raiser_floor", 1, -1, 20),
 ]
 
 # Opponents of different styles, so tuning can't settle on settings that only beat themselves.

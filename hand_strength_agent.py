@@ -1,3 +1,4 @@
+import itertools
 import math
 import random
 from card import Card
@@ -28,20 +29,33 @@ def chen_score(hand: list[Card]):
         points += 1
     return math.ceil(points)
 
+# Tries at dealing a raiser a hand from its range that doesn't clash with cards already dealt,
+# before giving up and dealing it random cards.
+RANGE_TRIES = 20
+
 def equity(hand: list[Card], board: list[Card], opponents: int, samples: int,
-           rng: random.Random):
+           rng: random.Random, raisers: int = 0, raiser_floor: int = -1):
     """Estimates the chance this hand wins at showdown, against opponents holding random cards.
 
     Each sample deals the opponents' cards and the rest of the board, so draws count for the
-    times they hit. Ties count as half a win.
+    times they hit. Ties count as half a win. raisers of the opponents are dealt only
+    starting hands with a Chen score of at least raiser_floor, since they raised before the
+    flop. A floor of -1 lets them hold anything.
     """
     seen = {(card.value, card.suit) for card in hand + board}
     unseen = [Card(value, suit) for value in VALUE_RANKS for suit in SUITS
               if (value, suit) not in seen]
     to_come = 5 - len(board)
+    in_range = []
+    if raisers and raiser_floor > -1:
+        in_range = [pair for pair in itertools.combinations(unseen, 2)
+                    if chen_score(list(pair)) >= raiser_floor]
     total = 0.0
     for _ in range(samples):
-        dealt = rng.sample(unseen, 2 * opponents + to_come)
+        if in_range:
+            dealt = _deal_with_ranges(unseen, in_range, raisers, 2 * opponents + to_come, rng)
+        else:
+            dealt = rng.sample(unseen, 2 * opponents + to_come)
         final_board = board + dealt[:to_come]
         mine = evaluate(hand + final_board)
         best = max(evaluate(dealt[i:i + 2] + final_board)
@@ -49,18 +63,34 @@ def equity(hand: list[Card], board: list[Card], opponents: int, samples: int,
         total += 1.0 if mine > best else 0.5 if mine == best else 0.0
     return total / samples
 
+def _deal_with_ranges(unseen: list[Card], in_range: list[tuple[Card, Card]], raisers: int,
+                      count: int, rng: random.Random):
+    """Deals count cards like rng.sample would, laid out as the rest of the board followed by
+    two cards per opponent, but with the last raisers pairs drawn from in_range."""
+    taken: list[Card] = []
+    for _ in range(raisers):
+        for _ in range(RANGE_TRIES):
+            pair = rng.choice(in_range)
+            if pair[0] not in taken and pair[1] not in taken:
+                taken.extend(pair)
+                break
+    rest = rng.sample([card for card in unseen if card not in taken], count - len(taken))
+    return rest + taken
+
 class HandStrengthAgent:
     """Bets on how strong its hand is: raises strong hands, calls when the price is right, and
     otherwise checks or folds.
 
     Before the flop it rates its cards with the Chen formula. After the flop it estimates its
     equity, its chance of winning at showdown, by dealing random cards to the players still in
-    and to the rest of the board.
+    and to the rest of the board. Anyone still in who raised before the flop is only dealt
+    starting hands with a Chen score of at least raiser_floor; the default of -1 lets them
+    hold anything.
     """
 
     def __init__(self, rng: random.Random | None = None, preflop_raise: int = 10,
                  preflop_call: int = 7, postflop_raise: float = 0.75, call_margin: float = 0.0,
-                 raise_size: float = 1.0, samples: int = 100):
+                 raise_size: float = 1.0, raiser_floor: int = -1, samples: int = 100):
         self._rng = rng or random.Random()
         self._preflop_raise = preflop_raise
         self._preflop_call = preflop_call
@@ -69,6 +99,7 @@ class HandStrengthAgent:
         self._call_margin = call_margin
         # Raises are this fraction of the pot after calling.
         self._raise_size = raise_size
+        self._raiser_floor = raiser_floor
         self._samples = samples
 
     def __call__(self, view: TableView):
@@ -77,9 +108,11 @@ class HandStrengthAgent:
             should_raise = score >= self._preflop_raise
             should_call = score >= self._preflop_call
         else:
-            opponents = len([seat for seat in view.opponents if not seat.folded])
-            chance = equity(list(view.hand), list(view.community_cards), opponents,
-                            self._samples, self._rng)
+            in_hand = {seat.name for seat in view.opponents if not seat.folded}
+            raisers = {record.name for record in view.history if record.name in in_hand
+                       and record.street == Street.PREFLOP and record.action == Action.RAISE}
+            chance = equity(list(view.hand), list(view.community_cards), len(in_hand),
+                            self._samples, self._rng, len(raisers), self._raiser_floor)
             should_raise = chance >= self._postflop_raise
             # Calling pays when the chance of winning beats the share of the final pot it costs.
             price = view.legal.to_call / (view.pot + view.legal.to_call)

@@ -64,6 +64,57 @@ def test_a_missed_draw_is_worth_little_on_the_river():
     assert equity(cards("9H 8H"), river, 1, 400, random.Random(0)) < 0.2
 
 
+def test_a_raiser_with_a_strong_range_beats_an_overpair_far_more_often():
+    # Queens on a low board are well ahead of random cards, but a raiser who only holds kings
+    # or aces (a Chen score of 16 or more) has them crushed.
+    board = cards("2D 7C 8S")
+    anyone = equity(cards("QS QH"), board, 1, 300, random.Random(0))
+    raiser = equity(cards("QS QH"), board, 1, 300, random.Random(0), raisers=1, raiser_floor=16)
+    assert anyone > 0.75
+    assert raiser < 0.25
+
+
+def test_a_floor_of_minus_one_deals_raisers_anything():
+    board = cards("2D 7C 8S")
+    assert (equity(cards("QS QH"), board, 2, 100, random.Random(0), raisers=2, raiser_floor=-1)
+            == equity(cards("QS QH"), board, 2, 100, random.Random(0)))
+
+
+def test_a_raiser_gets_random_cards_once_its_range_runs_out():
+    # Only aces score 20, and the four left make just two pairs of aces, so the third raiser
+    # can never be dealt one and gets random cards instead. Kings rarely beat two pairs of aces.
+    hand, board = cards("KS KH"), cards("2D 7C 8S")
+    assert equity(hand, board, 3, 100, random.Random(0), raisers=3, raiser_floor=20) < 0.15
+    assert equity(hand, board, 3, 100, random.Random(0)) > 0.5
+
+
+def test_a_range_with_no_hands_left_deals_random_cards():
+    # Three aces are out, so nobody can hold two: the raiser is dealt anything.
+    hand, board = cards("AS AH"), cards("AD 7C 8S")
+    assert (equity(hand, board, 1, 100, random.Random(0), raisers=1, raiser_floor=20)
+            == equity(hand, board, 1, 100, random.Random(0)))
+
+
+@pytest.mark.parametrize("actions, expected", [
+    # Everyone limps, so nobody raised.
+    ([CALL, CALL, CHECK, LOOK], 0),
+    # A raises and B calls: A raised.
+    ([(Action.RAISE, 30), CALL, FOLD, LOOK], 1),
+    # B re-raises A and A calls. B is the one asking, so only A counts.
+    ([(Action.RAISE, 30), (Action.RAISE, 90), FOLD, CALL, LOOK], 1),
+    # A raises, C re-raises and A folds: a raiser who folded doesn't count.
+    ([(Action.RAISE, 30), CALL, (Action.RAISE, 90), FOLD, CALL, LOOK], 1),
+    # A and C both raise and both stay in.
+    ([(Action.RAISE, 30), CALL, (Action.RAISE, 90), CALL, CALL, LOOK], 2),
+])
+def test_counts_opponents_still_in_who_raised_before_the_flop(monkeypatch, actions, expected):
+    calls = []
+    monkeypatch.setattr("hand_strength_agent.equity",
+                        lambda *args: calls.append(args[5:]) or 0)
+    decide([200, 200, 200], actions, raiser_floor=9)
+    assert calls == [(expected, 9)]
+
+
 def test_raises_a_strong_hand_by_the_pot():
     # A has aces and acts first: the pot is 15 and calling costs 10, so a pot raise is to 35.
     assert decide([100, 100, 100], [LOOK]) == (Action.RAISE, 35)
@@ -135,7 +186,7 @@ def test_folds_after_the_flop_when_the_price_is_wrong():
 def test_folded_players_do_not_count_as_opponents(monkeypatch):
     counts = []
     monkeypatch.setattr("hand_strength_agent.equity",
-                        lambda hand, board, opponents, samples, rng: counts.append(opponents) or 0)
+                        lambda hand, board, opponents, *rest: counts.append(opponents) or 0)
     # A raises, B calls and C folds, so on the flop B faces one opponent.
     decide([100, 100, 100], [(Action.RAISE, 30), CALL, FOLD, LOOK])
     assert counts == [1]
