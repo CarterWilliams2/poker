@@ -1,4 +1,5 @@
 import random
+import pytest
 from game import Action
 from tuning import Parameter, Trial, Tuner
 
@@ -69,3 +70,35 @@ def test_compare_works_without_a_seed():
 def test_tunes_without_reporting_trials():
     tuner = Tuner(make_agent, [Parameter("level", 1, 0, 1)], deals=4, rng=random.Random(1))
     assert tuner.tune({"level": 0}, rounds=2) == {"level": 1}
+
+
+def calling(rng):
+    return lambda view: (Action.CALL, 0) if view.legal.can_call else (Action.CHECK, 0)
+
+
+def test_head_to_head_is_scored_even_without_a_pool():
+    trial = Tuner(make_agent, [], deals=4, rng=random.Random(2)).compare(1, {"level": 1}, {"level": 0})
+    assert list(trial.by_opponent) == ["head-to-head"]
+    assert trial.by_opponent["head-to-head"] == trial.bb_per_100
+
+
+def test_pool_edge_is_how_many_more_chips_the_challenger_wins_on_the_same_deals():
+    # Against a folder, folding just trades blinds while shoving steals them, so the shover
+    # gains in the pool too. The overall edge averages head-to-head and the pool.
+    tuner = Tuner(make_agent, [], deals=10, opponents={"folder": lambda rng: folder},
+                  rng=random.Random(3))
+    trial = tuner.compare(1, {"level": 1}, {"level": 0})
+    assert trial.by_opponent["folder"] > 0
+    assert trial.bb_per_100 == pytest.approx(sum(trial.by_opponent.values()) / 2)
+    assert trial.accepted
+
+
+def test_a_change_that_only_beats_itself_can_be_outweighed_by_the_pool():
+    # Shoving beats folding heads-up, but a calling station takes the shover's whole stack
+    # whenever it has the better hand, so shoving can lose overall once the pool is counted.
+    tuner = Tuner(make_agent, [], deals=200, opponents={"calling": calling},
+                  rng=random.Random(4))
+    trial = tuner.compare(1, {"level": 1}, {"level": 0})
+    assert trial.by_opponent["head-to-head"] > 0
+    assert set(trial.by_opponent) == {"head-to-head", "calling"}
+    assert trial.bb_per_100 == pytest.approx(sum(trial.by_opponent.values()) / 2)
