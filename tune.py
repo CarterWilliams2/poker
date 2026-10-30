@@ -2,7 +2,7 @@ import argparse
 import random
 from aggressive_agent import AggressiveAgent
 from calling_station_agent import CallingStationAgent
-from hand_strength_agent import HandStrengthAgent
+from hand_strength_agent import TIGHT_SETTINGS, HandStrengthAgent
 from random_agent import RandomAgent
 from tuning import Parameter, Tuner
 
@@ -23,6 +23,7 @@ OPPONENTS = {
     "random": lambda rng: RandomAgent(rng),
     "calling": lambda rng: CallingStationAgent(),
     "aggressive": lambda rng: AggressiveAgent(),
+    "tight": lambda rng: HandStrengthAgent(rng, **TIGHT_SETTINGS),
 }
 
 def breakdown(trial):

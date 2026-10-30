@@ -2,7 +2,7 @@ import dataclasses
 import random
 import pytest
 from game import Action
-from hand_strength_agent import TUNED_SETTINGS, HandStrengthAgent, chen_score, equity
+from hand_strength_agent import TIGHT_SETTINGS, TUNED_SETTINGS, HandStrengthAgent, chen_score, equity
 from random_agent import RandomAgent
 from simulation import CashSimulation
 from conftest import LOOK, cards, view_at
@@ -214,3 +214,12 @@ def test_tuned_settings_build_an_agent():
     agent = HandStrengthAgent(random.Random(0), **TUNED_SETTINGS)
     assert agent._call_margin == TUNED_SETTINGS["call_margin"]
     assert agent._raise_size == TUNED_SETTINGS["raise_size"]
+
+
+def test_tight_settings_raise_strong_hands_and_fold_the_rest():
+    # A raises aces. With 9-8 suited (a Chen score of 8) C raises the limps, but with 7-2 it
+    # folds to a raise.
+    assert decide([100, 100, 100], [LOOK], **TIGHT_SETTINGS)[0] == Action.RAISE
+    assert decide([100, 100, 100], [CALL, CALL, LOOK], C_SUITED_CONNECTORS,
+                  **TIGHT_SETTINGS)[0] == Action.RAISE
+    assert decide([100, 100, 100], [(Action.RAISE, 30), CALL, LOOK], **TIGHT_SETTINGS) == FOLD
