@@ -1,17 +1,21 @@
 name: UI
 
+# Root *.py files are the engine. Running on engine changes too warns the engine team when a
+# change breaks something the UI relies on (rule 6 in CLAUDE.md).
 on:
   push:
     branches: ["**"]
-    paths: ["ui/**", ".github/workflows/ui.yml"]
+    paths: ["ui/**", ".github/workflows/ui.yml", "*.py"]
   # Also runs for pull requests from forks, which don't trigger a push in this repo.
   pull_request:
-    paths: ["ui/**", ".github/workflows/ui.yml"]
+    paths: ["ui/**", ".github/workflows/ui.yml", "*.py"]
 
 permissions:
   contents: read
 
 jobs:
+  # Not called test: main requires the engine's check of that name, and a UI job sharing it could
+  # make UI failures block engine PRs instead of only warning.
   server:
     runs-on: ubuntu-latest
     timeout-minutes: 10
