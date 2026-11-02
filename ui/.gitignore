@@ -1,0 +1,3 @@
+# The web app's installed packages and build output.
+web/node_modules/
+web/dist/

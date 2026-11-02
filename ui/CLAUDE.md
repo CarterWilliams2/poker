@@ -7,8 +7,10 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 - `play.py` starts the server: `python ui/play.py`.
 - `server/` is the server, a FastAPI app.
   - `engine.py` is the only module that imports engine code. The rest of the UI gets engine classes from it.
-  - `app.py` holds the endpoints.
+  - `app.py` holds the endpoints, and serves the built web app at `/`.
 - `tests/` has the server's tests.
+- `web/` is the web app, React and TypeScript built with Vite. `npm run build` puts it in `web/dist`, which the server serves. Until it's built, `/` shows how to build it.
+  - `src/` has the components, with their tests next to them (`*.test.ts` and `*.test.tsx`, run by Vitest).
 
 ## Rules
 
@@ -16,13 +18,17 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 - **Never add `ui/__init__.py`.** The engine's coverage check would then count every UI file and fail. Packages inside `ui/`, like `server/`, are fine.
 - **Run the tests from inside `ui/`,** so pytest uses `ui/pyproject.toml`. It measures only `server/` and fails below 100% coverage. From the repo root, pytest would use the engine's settings instead.
 - **Keep `play.py` thin.** Code outside `server/` isn't measured, so anything worth testing goes in `server/`.
-- **Cards are strings,** rank then suit: `"10H"`, `"AS"`.
+- **Add API routes before the web app in `create_app`.** It's mounted at `/`, so it hides any route added after it.
+- **Cards are strings,** rank then suit: `"10H"`, `"AS"`. `web/src/cards.ts` reads them.
 - **The server only listens on 127.0.0.1.**
-- **Pin new packages** in `requirements.txt` if the app needs them, or `requirements-dev.txt` if only the tests do. pytest and pytest-cov match the engine's versions, so one virtual environment can run both test suites.
+- **Pin new Python packages** in `requirements.txt` if the app needs them, or `requirements-dev.txt` if only the tests do. pytest and pytest-cov match the engine's versions, so one virtual environment can run both test suites.
+- **Add web packages with `npm install`** in `web/`, and commit `package-lock.json` with `package.json`. CI installs exactly what the lock file lists.
 
 ## Commands
 
-From the repo root, after setting up `.venv` as in `README.md`:
+From the repo root, after setting up as in `README.md`:
 
 - Run the server: `.venv/bin/python ui/play.py`
-- Run the tests: `cd ui && ../.venv/bin/pytest`
+- Rebuild the web app after changing it: `npm --prefix ui/web run build`, then reload the page
+- Run the server tests: `cd ui && ../.venv/bin/pytest`
+- Check the web app: `cd ui/web && npm run typecheck && npm test`
