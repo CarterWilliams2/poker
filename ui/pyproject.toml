@@ -1,0 +1,13 @@
+# The UI's own test settings, kept apart from the engine's. Run pytest from inside ui/ so these
+# are the ones it uses.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--cov --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["server"]
+
+[tool.coverage.report]
+fail_under = 100
