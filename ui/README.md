@@ -36,6 +36,14 @@ cd ui && ../.venv/bin/pytest
 cd ui/web && npm run typecheck && npm test
 ```
 
-The server tests fail if coverage of `server/` drops below 100%.
+The server tests fail if coverage of `server/` or `checks/` drops below 100%.
 
 `tests/test_engine_contract.py` pins the parts of the engine the UI uses. CI also runs it on its own as the `engine-contract` job, including on engine changes, so a failure there tells the engine team what their change would break in the UI.
+
+Before opening a pull request, check that your branch only changes UI files:
+
+```sh
+cd ui && ../.venv/bin/python -m checks.team_boundary origin/main
+```
+
+It lists the files the branch changes since it left `origin/main`, and fails if they include engine files too. CI runs the same check on pull requests as the `team-boundary` job.
