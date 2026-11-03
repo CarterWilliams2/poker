@@ -7,7 +7,9 @@ addopts = "--cov --cov-report=term-missing"
 
 [tool.coverage.run]
 branch = true
-source = ["server"]
+source = ["server", "checks"]
 
 [tool.coverage.report]
 fail_under = 100
+# The line that runs a module as a script. The tests call its main() instead.
+exclude_also = ['if __name__ == "__main__":']

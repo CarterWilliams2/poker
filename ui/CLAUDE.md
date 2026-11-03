@@ -8,7 +8,8 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 - `server/` is the server, a FastAPI app.
   - `engine.py` is the only module that imports engine code. The rest of the UI gets engine classes from it.
   - `app.py` holds the endpoints, and serves the built web app at `/`.
-- `tests/` has the server's tests. `test_engine_contract.py` pins the parts of the engine the UI uses.
+- `checks/` has checks CI runs on the repo itself. `team_boundary.py` fails a pull request that changes both UI and engine files.
+- `tests/` has the tests for `server/` and `checks/`. `test_engine_contract.py` pins the parts of the engine the UI uses.
 - `web/` is the web app, React and TypeScript built with Vite. `npm run build` puts it in `web/dist`, which the server serves. Until it's built, `/` shows how to build it.
   - `src/` has the components, with their tests next to them (`*.test.ts` and `*.test.tsx`, run by Vitest).
 
@@ -17,8 +18,8 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 - **Reach the engine only through `server/engine.py`,** and only through its public API: nothing whose name starts with `_`. When you need something new from the engine, add it to the imports and `__all__` there, then pin the parts you use with tests in `tests/test_engine_contract.py` marked `@pins`. A test there fails until every exported name is pinned.
 - **A failing contract test means the engine changed under the UI.** Fix the UI code that relies on the changed part first, then update the test to match the engine.
 - **Never add `ui/__init__.py`.** The engine's coverage check would then count every UI file and fail. Packages inside `ui/`, like `server/`, are fine.
-- **Run the tests from inside `ui/`,** so pytest uses `ui/pyproject.toml`. It measures only `server/` and fails below 100% coverage. From the repo root, pytest would use the engine's settings instead.
-- **Keep `play.py` thin.** Code outside `server/` isn't measured, so anything worth testing goes in `server/`.
+- **Run the tests from inside `ui/`,** so pytest uses `ui/pyproject.toml`. It measures only `server/` and `checks/`, and fails below 100% coverage. From the repo root, pytest would use the engine's settings instead.
+- **Keep `play.py` thin.** Code outside `server/` and `checks/` isn't measured, so anything worth testing goes in one of those.
 - **Add API routes before the web app in `create_app`.** It's mounted at `/`, so it hides any route added after it.
 - **Cards are strings,** rank then suit: `"10H"`, `"AS"`. `web/src/cards.ts` reads them.
 - **The server only listens on 127.0.0.1.**
@@ -33,3 +34,4 @@ From the repo root, after setting up as in `README.md`:
 - Rebuild the web app after changing it: `npm --prefix ui/web run build`, then reload the page
 - Run the server tests: `cd ui && ../.venv/bin/pytest`
 - Check the web app: `cd ui/web && npm run typecheck && npm test`
+- Check that your branch only changes UI files: `cd ui && ../.venv/bin/python -m checks.team_boundary origin/main`
