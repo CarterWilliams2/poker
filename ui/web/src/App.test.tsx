@@ -2,8 +2,29 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, expect, test, vi } from 'vitest'
 import App from './App.tsx'
 
-const FIRST = { hand: ['AS', 'KD'], board: ['2C', '3C', '4C', '5H', '10S'] }
-const SECOND = { hand: ['QH', 'JH'], board: ['9D', '9S', '8C', '7D', '6H'] }
+// Deals the way /api/deal sends them: your hand first, then your opponent's.
+const FIRST = {
+  hands: [
+    { cards: ['AS', 'KD'], name: 'Pair', wins: true },
+    { cards: ['QH', 'JH'], name: 'High Card', wins: false },
+  ],
+  board: ['2C', '3C', 'KC', '5H', '9S'],
+}
+const SECOND = {
+  hands: [
+    { cards: ['10D', '10H'], name: 'Pair', wins: false },
+    { cards: ['8C', '8D'], name: 'Three Of A Kind', wins: true },
+  ],
+  board: ['8H', '4S', '6D', 'JC', '2D'],
+}
+// The board is a royal flush, so it plays for both hands.
+const TIE = {
+  hands: [
+    { cards: ['2H', '3D'], name: 'Straight Flush', wins: true },
+    { cards: ['4C', '5H'], name: 'Straight Flush', wins: true },
+  ],
+  board: ['10S', 'JS', 'QS', 'KS', 'AS'],
+}
 
 // Makes fetch answer with each deal in turn, the way the server's /api/deal does.
 function serverDeals(...deals: object[]) {
@@ -20,22 +41,52 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('shows the hand and the board as cards', async () => {
+// The cards in a section of the page, by the names a screen reader gives them.
+function cardsIn(section: HTMLElement) {
+  return within(section).getAllByRole('img').map((card) => card.getAttribute('aria-label'))
+}
+
+test('shows both hands and the board as cards', async () => {
   serverDeals(FIRST)
   render(<App />)
-  const hand = await screen.findByRole('region', { name: 'Your hand' })
-  const names = within(hand).getAllByRole('img').map((card) => card.getAttribute('aria-label'))
-  expect(names).toEqual(['Ace of spades', 'King of diamonds'])
-  const board = screen.getByRole('region', { name: 'Board' })
-  expect(within(board).getAllByRole('img')).toHaveLength(5)
+  const yours = await screen.findByRole('region', { name: 'Your hand' })
+  expect(cardsIn(yours)).toEqual(['Ace of spades', 'King of diamonds'])
+  const theirs = screen.getByRole('region', { name: "Opponent's hand" })
+  expect(cardsIn(theirs)).toEqual(['Queen of hearts', 'Jack of hearts'])
+  expect(cardsIn(screen.getByRole('region', { name: 'Board' }))).toHaveLength(5)
+})
+
+test('names each hand and marks the winner', async () => {
+  serverDeals(FIRST)
+  render(<App />)
+  const yours = await screen.findByRole('region', { name: 'Your hand' })
+  expect(within(yours).getByText('Pair')).toBeTruthy()
+  expect(within(yours).getByText('Wins')).toBeTruthy()
+  const theirs = screen.getByRole('region', { name: "Opponent's hand" })
+  expect(within(theirs).getByText('High Card')).toBeTruthy()
+  expect(within(theirs).queryByText('Wins')).toBeNull()
+})
+
+test('marks both hands when they tie', async () => {
+  serverDeals(TIE)
+  render(<App />)
+  for (const name of ['Your hand', "Opponent's hand"]) {
+    const hand = await screen.findByRole('region', { name })
+    expect(within(hand).getByText('Straight Flush')).toBeTruthy()
+    expect(within(hand).getByText('Tie')).toBeTruthy()
+    expect(within(hand).queryByText('Wins')).toBeNull()
+  }
 })
 
 test('deals again when asked', async () => {
   const fetch = serverDeals(FIRST, SECOND)
   render(<App />)
   fireEvent.click(await screen.findByRole('button', { name: 'Deal again' }))
-  await screen.findByRole('img', { name: 'Queen of hearts' })
+  await screen.findByRole('img', { name: '10 of diamonds' })
   expect(screen.queryByRole('img', { name: 'Ace of spades' })).toBeNull()
+  const theirs = screen.getByRole('region', { name: "Opponent's hand" })
+  expect(within(theirs).getByText('Three Of A Kind')).toBeTruthy()
+  expect(within(theirs).getByText('Wins')).toBeTruthy()
   expect(fetch).toHaveBeenCalledTimes(2)
   expect(fetch).toHaveBeenCalledWith('/api/deal')
 })

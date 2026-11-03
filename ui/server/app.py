@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from server.engine import Card, Deck
+from server.engine import Card, Deck, evaluate, hand_name
 
 # Where npm run build puts the web app.
 WEB_DIST = Path(__file__).resolve().parents[1] / "web" / "dist"
@@ -20,18 +20,30 @@ def card_text(card: Card):
     """Writes a card as rank then suit, like "10H" or "AS"."""
     return card.value + card.suit
 
+def showdown(hands: list[list[Card]], board: list[Card]):
+    """Names the best hand each player makes with the board, like "Full House", using the engine's
+    scores, and marks the winners. Hands that tie for the best all win."""
+    scores = [evaluate(hand + board) for hand in hands]
+    best = max(scores)
+    return [{"cards": [card_text(card) for card in hand],
+             "name": hand_name(score),
+             "wins": score == best}
+            for hand, score in zip(hands, scores)]
+
 def create_app(web_dist: Path = WEB_DIST):
     """Builds the server: the API, plus the web app from web_dist once it has been built."""
     app = FastAPI(title="Poker")
 
     @app.get("/api/deal")
     def deal(seed: int | None = None):
-        """Deals two hole cards and a five-card board from a freshly shuffled engine deck. The
-        same seed always gives the same deal."""
+        """Deals two players two cards each and a five-card board from a freshly shuffled engine
+        deck, then names each hand and says which one wins. The same seed always gives the same
+        deal."""
         deck = Deck(random.Random(seed))
         deck.shuffle_deck()
-        cards = [card_text(deck.get_a_card()) for _ in range(7)]
-        return {"hand": cards[:2], "board": cards[2:]}
+        hands = [[deck.get_a_card(), deck.get_a_card()] for _ in range(2)]
+        board = [deck.get_a_card() for _ in range(5)]
+        return {"hands": showdown(hands, board), "board": [card_text(card) for card in board]}
 
     # The web app goes last: mounted at /, it would hide every route added after it.
     if (web_dist / "index.html").is_file():

@@ -79,6 +79,32 @@ h1 {
   font-size: 2.2rem;
 }
 
+.hand-name {
+  margin: 0.75rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.badge {
+  margin-left: 0.6rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #f2c14e;
+  color: #2b1d00;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: 0.1em;
+}
+
+/* The winning hand's cards glow the same gold as its badge. */
+.winner .card {
+  box-shadow:
+    0 0 0 0.2rem #f2c14e,
+    0 0.25rem 0.6rem rgb(0 0 0 / 35%);
+}
+
 button {
   padding: 0.7rem 1.6rem;
   border: none;

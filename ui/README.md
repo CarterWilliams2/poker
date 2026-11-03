@@ -1,6 +1,6 @@
 # Poker UI
 
-A browser UI for the poker engine at the repo root. So far it shows a random deal from the engine's deck as playing cards.
+A browser UI for the poker engine at the repo root. So far it deals two hands and a board from the engine's deck, names each hand with the engine's hand evaluator and shows which one wins.
 
 ## Setup
 
@@ -21,7 +21,7 @@ npm --prefix ui/web run build
 .venv/bin/python ui/play.py
 ```
 
-Then open http://127.0.0.1:8000 to see a deal: two hole cards and a five-card board. **Deal again** deals a new one.
+Then open http://127.0.0.1:8000 to see a deal: your two cards at the bottom, your opponent's at the top and a five-card board between them. Each hand is named, like "Two Pair", and the winning hand is marked **Wins**. When neither hand is better, both are marked **Tie**. **Deal again** deals a new one.
 
 After changing the web app, run `npm --prefix ui/web run build` and reload the page. If the server started before the first build, restart it.
 
