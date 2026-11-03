@@ -22,7 +22,7 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 - **Cards are strings,** rank then suit: `"10H"`, `"AS"`. `web/src/cards.ts` reads them.
 - **The server only listens on 127.0.0.1.**
 - **Pin new Python packages** in `requirements.txt` if the app needs them, or `requirements-dev.txt` if only the tests do. pytest and pytest-cov match the engine's versions, so one virtual environment can run both test suites.
-- **Add web packages with `npm install`** in `web/`, and commit `package-lock.json` with `package.json`. CI installs exactly what the lock file lists.
+- **Install the web app's packages with `npm ci`** in `web/`. It installs exactly what `package-lock.json` lists and never changes it, the same as CI. Use `npm install` only to add or update a package, then commit `package-lock.json` with `package.json`. Never ignore the lock file: `npm ci` can't run without it.
 
 ## Commands
 

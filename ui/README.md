@@ -9,11 +9,11 @@ From the repo root, with Python 3.11 and Node 22:
 ```sh
 python3.11 -m venv .venv
 .venv/bin/pip install -r ui/requirements-dev.txt
-npm --prefix ui/web install
+npm --prefix ui/web ci
 npm --prefix ui/web run build
 ```
 
-`.venv`, `ui/web/node_modules` and the build in `ui/web/dist` are ignored by git. To run the engine's tests from the same environment, also install `requirements-dev.txt`; its test tools are pinned to the same versions.
+`npm ci` installs exactly the versions in `ui/web/package-lock.json` and never changes that file. `.venv`, `ui/web/node_modules` and the build in `ui/web/dist` are ignored by git. To run the engine's tests from the same environment, also install `requirements-dev.txt`; its test tools are pinned to the same versions.
 
 ## Run
 

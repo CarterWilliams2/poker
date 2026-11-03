@@ -12,7 +12,7 @@ WEB_DIST = Path(__file__).resolve().parents[1] / "web" / "dist"
 NOT_BUILT_PAGE = """<!doctype html>
 <title>Poker</title>
 <h1>The web app hasn't been built yet</h1>
-<p>In <code>ui/web</code>, run <code>npm install</code> and then <code>npm run build</code>.
+<p>In <code>ui/web</code>, run <code>npm ci</code> and then <code>npm run build</code>.
 Then restart <code>python ui/play.py</code> and reload this page.</p>
 """
 
