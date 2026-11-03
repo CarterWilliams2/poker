@@ -37,3 +37,5 @@ cd ui/web && npm run typecheck && npm test
 ```
 
 The server tests fail if coverage of `server/` drops below 100%.
+
+`tests/test_engine_contract.py` pins the parts of the engine the UI uses. CI also runs it on its own as the `engine-contract` job, including on engine changes, so a failure there tells the engine team what their change would break in the UI.
