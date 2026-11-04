@@ -23,11 +23,33 @@ npm --prefix ui/web run build
 
 Then open http://127.0.0.1:8000 to see a deal: your two cards at the bottom, your opponent's at the top and a five-card board between them. Each hand is named, like "Two Pair", and the winning hand is marked **Wins**. When neither hand is better, both are marked **Tie**. **Deal again** deals a new one.
 
-After changing the web app, run `npm --prefix ui/web run build` and reload the page. If the server started before the first build, restart it.
+After changing the web app, run `npm --prefix ui/web run build` and reload the page. If the server started before the first build, restart it. To skip those steps while you work, see [Develop](#develop).
 
 The API is at http://127.0.0.1:8000/api/deal. Add `?seed=7` to get the same deal every time. http://127.0.0.1:8000/docs lists the endpoints.
 
 Use `--port` to pick another port. The server only accepts connections from this computer.
+
+## Develop
+
+To see your edits as soon as you save them, run the server and the web app's dev server together, each in its own terminal, from the repo root:
+
+```sh
+.venv/bin/python ui/play.py --reload
+npm --prefix ui/web run dev
+```
+
+Then open http://127.0.0.1:5173, the address the second command prints. If that port is busy, it uses the next free one. Nothing needs building first, and http://127.0.0.1:8000 keeps showing the last build.
+
+- **The web app:** saving a file in `ui/web/src` updates the open page without reloading it. If your edit breaks the web app, the error shows over the page until you save a fix.
+- **The server:** saving a Python file in `ui/server` restarts the server. A request made during the restart usually just waits for it. One caught at the instant the old server stops can fail, and then the page says it can't reach the server until you press **Deal again**. If your edit stops the server from starting, the first terminal shows the error and requests wait until you save a fix.
+- **The engine:** the server doesn't watch the engine's files, so restart it yourself after changing them. Watching them would mean checking all of `.venv` and `ui/web/node_modules` several times a second, because they all sit under the repo root.
+
+The dev server passes requests for `/api` and `/ws` to the Python server, so the web app calls the same addresses here as when the Python server serves it. If the Python server is on another port, tell the dev server where to find it:
+
+```sh
+.venv/bin/python ui/play.py --reload --port 9000
+POKER_SERVER_PORT=9000 npm --prefix ui/web run dev
+```
 
 ## Test
 
