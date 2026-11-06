@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import pytest
+from server.engine import MAX_PLAYERS, MIN_PLAYERS
 from server.fixtures import FOLDER, SAMPLES, write
 
 PROTOCOL = Path(__file__).resolve().parents[1] / "PROTOCOL.md"
@@ -53,6 +54,24 @@ def test_the_full_table_sample_has_a_side_pot_and_two_players_busting_at_once():
             busts.append(message["name"])
             two_busted = two_busted or len(busts) > 1
     assert side_pot and two_busted
+
+
+def test_there_is_a_sample_for_every_table_size():
+    sizes = [len(sample(name)[0]["table"]["seats"]) for name in SAMPLES]
+    assert sorted(sizes) == list(range(MIN_PLAYERS, MAX_PLAYERS + 1))
+
+
+# The most crowded the table gets, so the review page has to fit all of it in at every size.
+@pytest.mark.parametrize("name", SAMPLES)
+def test_every_sample_has_every_seat_betting_at_once_with_cards_out(name):
+    assert any(all(seat["bet"] > 0 and seat["cards"] for seat in message["table"]["seats"])
+               for message in sample(name))
+
+
+@pytest.mark.parametrize("name", SAMPLES)
+def test_every_sample_gets_to_a_showdown_on_the_river(name):
+    assert any(message["type"] == "showdown" and len(message["table"]["board"]) == 5
+               for message in sample(name))
 
 
 @pytest.mark.parametrize("name", SAMPLES)

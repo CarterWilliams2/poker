@@ -12,6 +12,10 @@ body {
   background: radial-gradient(ellipse at center, #11744a 0%, #0a5234 55%, #062e1d 100%);
 }
 
+#root {
+  width: 100%;
+}
+
 .table {
   display: flex;
   flex-direction: column;
@@ -48,12 +52,12 @@ h1 {
 
 .card {
   position: relative;
-  width: 4.5rem;
-  height: 6.4rem;
-  border-radius: 0.5rem;
+  width: 4.5em;
+  height: 6.4em;
+  border-radius: 0.5em;
   background: #fffdf8;
   color: #1b1b1b;
-  box-shadow: 0 0.25rem 0.6rem rgb(0 0 0 / 35%);
+  box-shadow: 0 0.25em 0.6em rgb(0 0 0 / 35%);
   user-select: none;
 }
 
@@ -63,9 +67,9 @@ h1 {
 
 .corner {
   position: absolute;
-  top: 0.35rem;
-  left: 0.45rem;
-  font-size: 1rem;
+  top: 0.35em;
+  left: 0.45em;
+  font-size: 1em;
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
@@ -76,7 +80,7 @@ h1 {
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 2.2rem;
+  font-size: 2.2em;
 }
 
 .hand-name {
@@ -135,4 +139,213 @@ button:disabled {
 
 code {
   font-family: ui-monospace, Menlo, monospace;
+}
+
+/* The poker table. Everything on it is sized in em, and an em is a share of the table's width, so
+   it looks the same at any size and what fits at one size fits at all of them. */
+.poker-table {
+  container-type: inline-size;
+  width: 100%;
+}
+
+.felt {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  font-size: 1.6cqw;
+}
+
+.felt::before {
+  content: '';
+  position: absolute;
+  inset: 9% 7%;
+  border: 0.8em solid #4a2e17;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, #15855a 0%, #0c6340 70%);
+  box-shadow:
+    inset 0 0 1.5em rgb(0 0 0 / 45%),
+    0 0.5em 1.5em rgb(0 0 0 / 50%);
+}
+
+.middle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.pot {
+  margin: 0;
+  padding: 0.1em 0.8em;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 35%);
+  font-weight: 700;
+}
+
+.board {
+  display: flex;
+  gap: 0.35em;
+}
+
+.board .card {
+  font-size: 0.82em;
+}
+
+.card.empty {
+  background: none;
+  box-shadow: inset 0 0 0 0.1em rgb(255 255 255 / 18%);
+}
+
+/* A seat's place around the table comes from --across and --down, set in Table.tsx. */
+.seat {
+  position: absolute;
+  left: calc(50% + var(--across) * 43%);
+  top: calc(50% + var(--down) * 41%);
+  transform: translate(-50%, -50%);
+  width: 8.5em;
+}
+
+.seat-cards {
+  display: flex;
+  justify-content: center;
+  gap: 0.2em;
+  height: 3.6em;
+}
+
+.seat-cards .card {
+  font-size: 0.7em;
+}
+
+/* Bigger corners and a smaller pip than the deal page's cards, to stay readable at this size. */
+.felt .corner {
+  font-size: 1.35em;
+}
+
+.felt .pip {
+  font-size: 1.7em;
+  place-items: end;
+  padding: 0.25em;
+}
+
+/* The nameplate covers the bottom of a player's cards, where the pip would be. */
+.seat-cards .pip {
+  display: none;
+}
+
+.nameplate {
+  position: relative;
+  margin-top: -0.5em;
+  padding: 0.2em 0.5em;
+  border-radius: 0.6em;
+  background: #10201a;
+  box-shadow: 0 0.15em 0.4em rgb(0 0 0 / 50%);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.seat-name {
+  display: block;
+  overflow: hidden;
+  font-size: 0.85em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stack {
+  display: block;
+  color: #f2c14e;
+  font-weight: 700;
+}
+
+/* A bet sits in front of its player, between them and the middle. The first translate makes a big
+   bet grow away from its player. */
+.bet {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% - var(--across) * 50%), -50%)
+    translate(calc(var(--across) * -7em), calc(var(--down) * -5.9em));
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.05em 0.5em 0.05em 0.25em;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 45%);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bet::before {
+  content: '';
+  width: 1em;
+  height: 1em;
+  box-sizing: border-box;
+  border: 0.18em dashed #fffdf8;
+  border-radius: 50%;
+  background: #c62828;
+}
+
+/* Beside the bet, a little closer to the player, on the side clockwise from them. Whichever way the
+   seat faces, these offsets keep the button just clear of it. */
+.dealer-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%)
+    translate(
+      calc(var(--across) * -5.9em + var(--down) * 4.2em),
+      calc(var(--down) * -4.3em - var(--across) * 3em)
+    );
+  display: grid;
+  place-items: center;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 50%;
+  background: #fffdf8;
+  box-shadow: 0 0.1em 0.3em rgb(0 0 0 / 50%);
+  color: #1b1b1b;
+  font-weight: 800;
+}
+
+/* The review page at /dev/fixtures. */
+.fixtures {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 2rem;
+}
+
+.fixtures nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.fixtures a {
+  color: #f2c14e;
+}
+
+.fixtures h2 {
+  margin: 2rem 0 1rem;
+}
+
+.fixture-states {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(36rem, 100%), 1fr));
+  gap: 1rem;
+}
+
+.fixture-state {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: #0a1d15;
+}
+
+.fixture-state figcaption {
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
 }

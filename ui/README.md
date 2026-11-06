@@ -1,6 +1,6 @@
 # Poker UI
 
-A browser UI for the poker engine at the repo root. So far it deals two hands and a board from the engine's deck, names each hand with the engine's hand evaluator and shows which one wins. It can also stream a match between the engine's bots over a WebSocket, which the web app doesn't show yet.
+A browser UI for the poker engine at the repo root. So far it deals two hands and a board from the engine's deck, names each hand with the engine's hand evaluator and shows which one wins. It can also stream a match between the engine's bots over a WebSocket, and draw the poker table for matches recorded from that stream. The web app doesn't show a live match yet.
 
 ## Setup
 
@@ -44,6 +44,12 @@ Then type a start message and press Enter. Each line back is one thing that happ
 ```
 
 The same `seed` always gives exactly the same match. When the match is over the server closes the socket and the command ends by itself. To leave sooner, press Ctrl-D, which ends the match too.
+
+## Review the table
+
+http://127.0.0.1:8000/dev/fixtures draws the poker table at every moment of the matches recorded in `fixtures/`, with every table size from 2 to 8 seats. Above each table is the message it was drawn from. It's there to check how the table looks after changing it. With [`npm run dev`](#develop) running, http://127.0.0.1:5173/dev/fixtures updates as you save.
+
+The pot in the middle only counts chips already collected. A bet stays in front of its player until the betting round ends, so every number on the table adds up to the chips the match started with.
 
 ## Develop
 
