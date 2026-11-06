@@ -1,6 +1,6 @@
 # Poker UI
 
-A browser UI for the poker engine at the repo root. So far it deals two hands and a board from the engine's deck, names each hand with the engine's hand evaluator and shows which one wins.
+A browser UI for the poker engine at the repo root. So far it deals two hands and a board from the engine's deck, names each hand with the engine's hand evaluator and shows which one wins. It can also stream a match between the engine's bots over a WebSocket, which the web app doesn't show yet.
 
 ## Setup
 
@@ -28,6 +28,22 @@ After changing the web app, run `npm --prefix ui/web run build` and reload the p
 The API is at http://127.0.0.1:8000/api/deal. Add `?seed=7` to get the same deal every time. http://127.0.0.1:8000/docs lists the endpoints.
 
 Use `--port` to pick another port. The server only accepts connections from this computer.
+
+## Watch a match
+
+`ws://127.0.0.1:8000/ws/watch` plays a match between the engine's bots and sends you everything that happens. [`PROTOCOL.md`](PROTOCOL.md) describes the messages. With the server running, try it from the repo root:
+
+```sh
+.venv/bin/python -m websockets ws://127.0.0.1:8000/ws/watch
+```
+
+Then type a start message and press Enter. Each line back is one thing that happened, ending with `match_over`:
+
+```json
+{"type": "start", "bots": ["tuned", "random"], "chips": 30, "seed": 7}
+```
+
+The same `seed` always gives exactly the same match. When the match is over the server closes the socket and the command ends by itself. To leave sooner, press Ctrl-D, which ends the match too.
 
 ## Develop
 

@@ -15,9 +15,11 @@ def main():
     else:
         print(f"Open http://127.0.0.1:{args.port} in your browser")
     # Only this computer can connect. The app goes by name because reloading has to import it
-    # afresh on every restart.
+    # afresh on every restart. Without the time limit, a browser that has stopped reading its
+    # socket would hold up quitting and reloading forever.
     uvicorn.run("server.app:app", host="127.0.0.1", port=args.port, reload=args.reload,
-                reload_dirs=[str(SERVER_FOLDER)] if args.reload else None)
+                reload_dirs=[str(SERVER_FOLDER)] if args.reload else None,
+                timeout_graceful_shutdown=2)
 
 if __name__ == "__main__":
     main()

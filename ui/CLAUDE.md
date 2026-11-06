@@ -4,12 +4,16 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 
 ## Layout
 
+- `PROTOCOL.md` describes the WebSocket messages between the server and the web app.
 - `play.py` starts the server: `python ui/play.py`.
 - `server/` is the server, a FastAPI app.
   - `engine.py` is the only module that imports engine code. The rest of the UI gets engine classes from it.
   - `app.py` holds the endpoints, and serves the built web app at `/`.
+  - `watch.py` plays a match between bots and reports it as messages. `/ws/watch` runs that on its own thread and sends what it reports.
+  - `fixtures.py` records the sample matches in `fixtures/`.
 - `checks/` has checks CI runs on the repo itself. `team_boundary.py` fails a pull request that changes both UI and engine files.
-- `tests/` has the tests for `server/` and `checks/`. `test_engine_contract.py` pins the parts of the engine the UI uses. `test_play.py` runs `play.py` for real, reloading included.
+- `tests/` has the tests for `server/` and `checks/`. `test_engine_contract.py` pins the parts of the engine the UI uses. `test_play.py` runs `play.py` for real, reloading and WebSockets included.
+- `fixtures/` has real matches recorded from the server, one message per line, for the server and web tests to check against.
 - `web/` is the web app, React and TypeScript built with Vite. `npm run build` puts it in `web/dist`, which the server serves. Until it's built, `/` shows how to build it.
   - `src/` has the components, with their tests next to them (`*.test.ts` and `*.test.tsx`, run by Vitest).
   - `vite.config.ts` sets up `npm run dev`, which serves the web app with hot reload and passes `/api` and `/ws` to the Python server. `vite.config.test.ts` checks that against real servers.
@@ -22,7 +26,9 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 - **Run the tests from inside `ui/`,** so pytest uses `ui/pyproject.toml`. It measures only `server/` and `checks/`, and fails below 100% coverage. From the repo root, pytest would use the engine's settings instead.
 - **Keep `play.py` thin.** Code outside `server/` and `checks/` isn't measured, so anything worth testing goes in one of those.
 - **Add API routes before the web app in `create_app`.** It's mounted at `/`, so it hides any route added after it.
-- **Cards are strings,** rank then suit: `"10H"`, `"AS"`. `web/src/cards.ts` reads them.
+- **Cards are strings,** rank then suit: `"10H"`, `"AS"`. `server/cards.py` writes them and `web/src/cards.ts` reads them.
+- **`PROTOCOL.md` is the contract for WebSocket messages.** When you change a message, update it and re-record the samples with `python -m server.fixtures`. A test fails until the samples match what the server sends.
+- **Test WebSocket routes on real uvicorn, not with `TestClient`,** which skips uvicorn, can't show a browser leaving, and waits forever if the server goes quiet. `serving` in `tests/test_watch.py` does that.
 - **Keep every address the web app calls under `/api` or `/ws`.** `npm run dev` only passes those to the Python server, so anything else would work in the built app but fail while developing.
 - **The server and the dev server only listen on 127.0.0.1.**
 - **Pin new Python packages** in `requirements.txt` if the app needs them, or `requirements-dev.txt` if only the tests do. pytest and pytest-cov match the engine's versions, so one virtual environment can run both test suites.
@@ -35,6 +41,8 @@ From the repo root, after setting up as in `README.md`:
 - Run the server: `.venv/bin/python ui/play.py`
 - Rebuild the web app after changing it: `npm --prefix ui/web run build`, then reload the page
 - See edits as you save them, with each command in its own terminal: `.venv/bin/python ui/play.py --reload` and `npm --prefix ui/web run dev`, then open the address the second one prints
+- Watch a match in the terminal: `.venv/bin/python -m websockets ws://127.0.0.1:8000/ws/watch`, then type `{"type": "start", "seed": 7}`
+- Re-record the samples after changing a message: `cd ui && ../.venv/bin/python -m server.fixtures`
 - Run the server tests: `cd ui && ../.venv/bin/pytest`
 - Check the web app: `cd ui/web && npm run typecheck && npm test`
 - Check that your branch only changes UI files: `cd ui && ../.venv/bin/python -m checks.team_boundary origin/main`
