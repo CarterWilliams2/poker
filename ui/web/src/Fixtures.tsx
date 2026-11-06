@@ -1,9 +1,9 @@
-import type { Message } from './protocol.ts'
+import type { TableMessage } from './protocol.ts'
 import Table from './Table.tsx'
 
 // Every recorded match in ui/fixtures, smallest table first.
 const SAMPLES = Object.entries(
-  import.meta.glob<Message[]>('../../fixtures/*.json', { eager: true, import: 'default' }),
+  import.meta.glob<TableMessage[]>('../../fixtures/*.json', { eager: true, import: 'default' }),
 )
   .map(([path, messages]) => ({
     name: path.split('/').pop()!.replace('.json', ''),
@@ -45,7 +45,7 @@ export default function Fixtures() {
 }
 
 // One message: what happened, then the table as it stands afterwards.
-function State({ number, message }: { number: number; message: Message }) {
+function State({ number, message }: { number: number; message: TableMessage }) {
   const { table, ...event } = message
   return (
     <figure className="fixture-state">

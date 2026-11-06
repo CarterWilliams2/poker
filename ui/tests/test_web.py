@@ -17,7 +17,7 @@ def test_serves_the_built_web_app(tmp_path):
     assert client.get("/assets/app.js").text == "console.log('dealt')"
 
 
-@pytest.mark.parametrize("page", ["/", "/dev/fixtures"])
+@pytest.mark.parametrize("page", ["/", "/watch", "/dev/fixtures"])
 def test_every_page_loads_the_web_app(tmp_path, page):
     response = TestClient(create_app(built_web_app(tmp_path))).get(page)
     assert response.status_code == 200
@@ -43,7 +43,7 @@ def test_a_page_is_not_found_while_the_web_app_is_being_rebuilt(tmp_path):
 
 
 @pytest.mark.parametrize("address", ["/nonsense", "/dev", "/dev/nonsense", "/dev/fixtures/more",
-                                     "/api/nonsense", "/assets/missing.js"])
+                                     "/watch/more", "/api/nonsense", "/assets/missing.js"])
 def test_any_other_address_is_not_found(tmp_path, address):
     assert TestClient(create_app(built_web_app(tmp_path))).get(address).status_code == 404
 
@@ -53,7 +53,7 @@ def test_the_api_still_answers_next_to_the_web_app(tmp_path):
     assert len(client.get("/api/deal").json()["board"]) == 5
 
 
-@pytest.mark.parametrize("page", ["/", "/dev/fixtures"])
+@pytest.mark.parametrize("page", ["/", "/watch", "/dev/fixtures"])
 def test_says_how_to_build_the_web_app_until_it_is_built(tmp_path, page):
     client = TestClient(create_app(tmp_path / "dist"))
     response = client.get(page)
