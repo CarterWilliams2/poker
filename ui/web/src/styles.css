@@ -310,6 +310,27 @@ code {
   font-weight: 800;
 }
 
+/* The watch page. The table is as big as it can be with all of it, and the line above it, on screen
+   at once: 5rem is that line and the padding, and 2rem gives the side padding back. */
+.watch {
+  box-sizing: border-box;
+  width: min(100%, calc((100vh - 5rem) * 16 / 9 + 2rem));
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.watch header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+
+.watch p {
+  margin: 0;
+}
+
 /* The review page at /dev/fixtures. */
 .fixtures {
   box-sizing: border-box;

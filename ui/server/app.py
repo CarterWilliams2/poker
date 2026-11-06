@@ -13,7 +13,7 @@ WEB_DIST = Path(__file__).resolve().parents[1] / "web" / "dist"
 
 # The web app's pages. They aren't files: each one loads index.html, and then web/src/Pages.tsx
 # draws the page for that address.
-PAGES = ["/", "/dev/fixtures"]
+PAGES = ["/", "/watch", "/dev/fixtures"]
 
 # Shown at those addresses until the web app has been built.
 NOT_BUILT_PAGE = """<!doctype html>

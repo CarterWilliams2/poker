@@ -3,8 +3,9 @@ import { afterEach, expect, test, vi } from 'vitest'
 import Pages from './Pages.tsx'
 
 // These tests only check which page is picked. The real review page takes too long to draw to wait
-// for here, and Fixtures.test.tsx tests it.
+// for here, and the real watch page would connect to a server. Each has tests of its own.
 vi.mock('./Fixtures.tsx', () => ({ default: () => <h1>Sample states</h1> }))
+vi.mock('./Watch.tsx', () => ({ default: () => <h1>Watch</h1> }))
 
 afterEach(() => {
   cleanup()
@@ -17,6 +18,16 @@ test('the deal is the page at /', async () => {
   render(<Pages />)
   expect(await screen.findByRole('button', { name: 'Deal again' })).toBeTruthy()
   expect(screen.queryByText('Sample states')).toBeNull()
+})
+
+test.each(['/watch', '/watch/'])('the watch page is at %s, and deals nothing', (address) => {
+  const fetch = vi.fn()
+  vi.stubGlobal('fetch', fetch)
+  history.pushState({}, '', address)
+  render(<Pages />)
+  expect(screen.getByRole('heading', { name: 'Watch' })).toBeTruthy()
+  expect(screen.queryByText('Deal again')).toBeNull()
+  expect(fetch).not.toHaveBeenCalled()
 })
 
 test.each(['/dev/fixtures', '/dev/fixtures/'])(

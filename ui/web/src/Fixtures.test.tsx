@@ -2,9 +2,9 @@ import { cleanup, render, within } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { cardName } from './cards.ts'
 import Fixtures from './Fixtures.tsx'
-import type { Message } from './protocol.ts'
+import type { TableMessage } from './protocol.ts'
 
-const SAMPLES = import.meta.glob<Message[]>('../../fixtures/*.json', {
+const SAMPLES = import.meta.glob<TableMessage[]>('../../fixtures/*.json', {
   eager: true,
   import: 'default',
 })

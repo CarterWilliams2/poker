@@ -1,12 +1,12 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
 import { cardName } from './cards.ts'
-import type { Message, SeatState, TableState } from './protocol.ts'
+import type { SeatState, TableMessage, TableState } from './protocol.ts'
 import Table from './Table.tsx'
 
 // Every recorded match, as the server sent it.
 const SAMPLES = Object.values(
-  import.meta.glob<Message[]>('../../fixtures/*.json', { eager: true, import: 'default' }),
+  import.meta.glob<TableMessage[]>('../../fixtures/*.json', { eager: true, import: 'default' }),
 )
 
 afterEach(cleanup)

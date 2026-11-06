@@ -15,7 +15,7 @@ The browser UI for the poker engine. This folder and `.github/workflows/ui.yml` 
 - `tests/` has the tests for `server/` and `checks/`. `test_engine_contract.py` pins the parts of the engine the UI uses. `test_play.py` runs `play.py` for real, reloading and WebSockets included.
 - `fixtures/` has real matches recorded from the server, one message per line, for the server and web tests to check against. The review page at `/dev/fixtures` draws them all.
 - `web/` is the web app, React and TypeScript built with Vite. `npm run build` puts it in `web/dist`, which the server serves. Until it's built, its pages show how to build it.
-  - `src/` has the components, with their tests next to them (`*.test.ts` and `*.test.tsx`, run by Vitest). `Pages.tsx` picks the page for the address, `Table.tsx` draws the poker table and `Fixtures.tsx` is the review page. `protocol.ts` has the types for the messages in `PROTOCOL.md`.
+  - `src/` has the components, with their tests next to them (`*.test.ts` and `*.test.tsx`, run by Vitest). `Pages.tsx` picks the page for the address, `Watch.tsx` is the page that shows a live match, `Table.tsx` draws the poker table and `Fixtures.tsx` is the review page. `api.ts` talks to the server, and `protocol.ts` has the types for the messages in `PROTOCOL.md`.
   - `vite.config.ts` sets up `npm run dev`, which serves the web app with hot reload and passes `/api` and `/ws` to the Python server. `vite.config.test.ts` checks that against real servers.
 
 ## Rules
