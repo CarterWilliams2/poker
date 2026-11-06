@@ -75,3 +75,16 @@ test('serves the web app itself, with hot reload', async () => {
   expect(page).toContain('/src/main.tsx')
   expect(page).toContain('/@vite/client')
 })
+
+test('serves the web app at its other pages too', async () => {
+  const page = await (await fetch(`http://${host}/dev/fixtures`)).text()
+  expect(page).toContain('/src/main.tsx')
+})
+
+test('can load the samples, which sit outside the web folder', async () => {
+  const code = await (await fetch(`http://${host}/src/Fixtures.tsx`)).text()
+  const [, address] = code.match(/"([^"]*heads-up\.json[^"]*)"/)!
+  const sample = await fetch(`http://${host}${address}`)
+  expect(sample.status).toBe(200)
+  expect(await sample.text()).toContain('match_start')
+})

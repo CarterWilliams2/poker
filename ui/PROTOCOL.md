@@ -98,7 +98,7 @@ Some things about `pot` the web app can't tell from these messages:
 
 ## Samples
 
-`fixtures/` has real matches recorded from the server, for the server and web tests to check against. Each file is a JSON array of the messages from `match_start` to `match_over`, with one message per line. `server/fixtures.py` lists what each one shows.
+`fixtures/` has real matches recorded from the server, for the server and web tests to check against, and the web app's `/dev/fixtures` page draws them. Each file is a JSON array of the messages from `match_start` to `match_over`, with one message per line. `server/fixtures.py` lists what each one shows.
 
 A server test fails when the samples no longer match what the server sends. After changing a message on purpose, re-record them from `ui/`:
 

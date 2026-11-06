@@ -11,13 +11,23 @@ from server.watch import parse_start, play_match
 # Where npm run build puts the web app.
 WEB_DIST = Path(__file__).resolve().parents[1] / "web" / "dist"
 
-# Shown at / until the web app has been built.
+# The web app's pages. They aren't files: each one loads index.html, and then web/src/Pages.tsx
+# draws the page for that address.
+PAGES = ["/", "/dev/fixtures"]
+
+# Shown at those addresses until the web app has been built.
 NOT_BUILT_PAGE = """<!doctype html>
 <title>Poker</title>
 <h1>The web app hasn't been built yet</h1>
 <p>In <code>ui/web</code>, run <code>npm ci</code> and then <code>npm run build</code>.
 Then restart <code>python ui/play.py</code> and reload this page.</p>
 """
+
+class WebApp(StaticFiles):
+    """The built web app's files and pages."""
+
+    async def get_response(self, path, scope):
+        return await super().get_response("index.html" if f"/{path}" in PAGES else path, scope)
 
 def showdown(hands: list[list[Card]], board: list[Card]):
     """Names the best hand each player makes with the board, like "Full House", using the engine's
@@ -74,11 +84,13 @@ def create_app(web_dist: Path = WEB_DIST):
 
     # The web app goes last: mounted at /, it would hide every route added after it.
     if (web_dist / "index.html").is_file():
-        app.mount("/", StaticFiles(directory=web_dist, html=True), name="web")
+        app.mount("/", WebApp(directory=web_dist, html=True), name="web")
     else:
-        @app.get("/", response_class=HTMLResponse)
         def not_built():
             return NOT_BUILT_PAGE
+
+        for page in PAGES:
+            app.add_api_route(page, not_built, response_class=HTMLResponse)
     return app
 
 app = create_app()
