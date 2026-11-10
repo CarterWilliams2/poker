@@ -1,3 +1,4 @@
+import { bubblesAt, type Bubbles } from './events.ts'
 import type { TableMessage } from './protocol.ts'
 import Table from './Table.tsx'
 
@@ -35,7 +36,12 @@ export default function Fixtures() {
           </h2>
           <div className="fixture-states">
             {messages.map((message, index) => (
-              <State key={index} number={index + 1} message={message} />
+              <State
+                key={index}
+                number={index + 1}
+                message={message}
+                bubbles={bubblesAt(messages, index)}
+              />
             ))}
           </div>
         </section>
@@ -44,15 +50,18 @@ export default function Fixtures() {
   )
 }
 
-// One message: what happened, then the table as it stands afterwards.
-function State({ number, message }: { number: number; message: TableMessage }) {
+type StateProps = { number: number; message: TableMessage; bubbles: Bubbles }
+
+// One message: what happened, then the table as it stands afterwards, with what each player last
+// did this betting round.
+function State({ number, message, bubbles }: StateProps) {
   const { table, ...event } = message
   return (
     <figure className="fixture-state">
       <figcaption>
         {number}. <code>{JSON.stringify(event)}</code>
       </figcaption>
-      <Table table={table} />
+      <Table table={table} bubbles={bubbles} />
     </figure>
   )
 }

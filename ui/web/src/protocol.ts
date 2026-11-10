@@ -20,11 +20,20 @@ export type TableState = {
   seats: SeatState[]
 }
 
+export type ActionMessage = {
+  type: 'action'
+  name: string
+  action: 'fold' | 'check' | 'call' | 'raise'
+  amount: number
+  table: TableState
+}
+
 // Most types of message have more fields of their own, which the web app doesn't use yet.
 export type TableMessage =
+  | ActionMessage
   | { type: 'match_over'; hands_played: number; table: TableState }
   | {
-      type: 'match_start' | 'hand_start' | 'action' | 'street' | 'showdown' | 'pot' | 'busted'
+      type: 'match_start' | 'hand_start' | 'street' | 'showdown' | 'pot' | 'busted'
       table: TableState
     }
 
