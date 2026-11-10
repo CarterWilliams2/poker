@@ -89,12 +89,63 @@ class TableView:
             min_raise=game.min_raise,
             small_blind=game.small_blind,
             big_blind=game.big_blind,
-            seats=tuple(SeatView(p.name, p.chips, p.committed_this_round, p.committed_this_hand,
-                                 p.folded) for p in game.seated),
-            history=tuple(ActionRecord(p.name, street, action, amount)
-                          for p, street, action, amount in game.history),
+            seats=_seat_views(game),
+            history=_action_records(game),
             legal=_legal_actions(player, game),
         )
+
+@dataclass(frozen=True)
+class PotResult:
+    """One pot paid out at the end of a hand, and who it went to. A bet nobody called comes
+    back to its owner as a pot with one winner. When a pot splits unevenly, the first winner
+    gets the odd chips."""
+    amount: int
+    winners: tuple[str, ...]
+
+@dataclass(frozen=True)
+class HandResult:
+    """What one player learns when a hand ends: everything public about how it went, plus the
+    cards shown at a showdown. Agents get this through an optional hand_over method."""
+    # The player this result was made for, so an agent that was never asked to act still knows
+    # which seat was its own.
+    name: str
+    community_cards: tuple[Card, ...]
+    # Everyone dealt into the hand, starting from the button, with their stacks after the pots
+    # were paid.
+    seats: tuple[SeatView, ...]
+    history: tuple[ActionRecord, ...]
+    pots: tuple[PotResult, ...]
+    # The cards of every player still in at the showdown, by name. Empty when everyone else
+    # folded, since the winner never has to show.
+    shown: dict[str, tuple[Card, ...]]
+    # How many chips each player dealt in won this hand, less what they put in.
+    won: dict[str, int]
+
+    @classmethod
+    def for_player(cls, player: Player, game: Game, pots: list[tuple[int, list[Player]]],
+                   chips_before: dict[Player, int]):
+        """Builds the result from a game whose hand just ended, with pots as Game.play_hand
+        returned them and each player's chips before the hand."""
+        in_hand = [p for p in game.seated if not p.folded]
+        shown = {p.name: tuple(p.hand) for p in in_hand} if len(in_hand) > 1 else {}
+        return cls(
+            name=player.name,
+            community_cards=tuple(game.community_cards),
+            seats=_seat_views(game),
+            history=_action_records(game),
+            pots=tuple(PotResult(amount, tuple(p.name for p in winners))
+                       for amount, winners in pots),
+            shown=shown,
+            won={p.name: p.chips - chips_before[p] for p in game.seated},
+        )
+
+def _seat_views(game: Game):
+    return tuple(SeatView(p.name, p.chips, p.committed_this_round, p.committed_this_hand,
+                          p.folded) for p in game.seated)
+
+def _action_records(game: Game):
+    return tuple(ActionRecord(p.name, street, action, amount)
+                 for p, street, action, amount in game.history)
 
 def _legal_actions(player: Player, game: Game):
     all_in_total = player.committed_this_round + player.chips
