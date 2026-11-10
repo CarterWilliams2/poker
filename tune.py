@@ -1,9 +1,7 @@
 import argparse
 import random
-from aggressive_agent import AggressiveAgent
-from calling_station_agent import CallingStationAgent
-from hand_strength_agent import TIGHT_SETTINGS, HandStrengthAgent
-from random_agent import RandomAgent
+from agents import AGENTS
+from hand_strength_agent import HandStrengthAgent
 from tuning import Parameter, Tuner
 
 DEFAULTS = {"preflop_raise": 10, "preflop_call": 7, "postflop_raise": 0.75,
@@ -19,12 +17,7 @@ PARAMETERS = [
 ]
 
 # Opponents of different styles, so tuning can't settle on settings that only beat themselves.
-OPPONENTS = {
-    "random": lambda rng: RandomAgent(rng),
-    "calling": lambda rng: CallingStationAgent(),
-    "aggressive": lambda rng: AggressiveAgent(),
-    "tight": lambda rng: HandStrengthAgent(rng, **TIGHT_SETTINGS),
-}
+OPPONENTS = {name: AGENTS[name] for name in ("random", "calling", "aggressive", "tight")}
 
 def breakdown(trial):
     return ", ".join(f"{name} {edge:+.1f}" for name, edge in trial.by_opponent.items())

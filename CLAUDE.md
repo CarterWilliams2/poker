@@ -34,4 +34,5 @@ UI work follows the rules in `ui/CLAUDE.md` as well as these, once that file exi
 ## Engine conventions
 
 - Run the tests with `pytest` from the repo root. It fails if any test fails or coverage drops below 100%.
+- Bots are registered by name in `agents.py`. A bot added there shows up in `simulate.py`, `tune.py` and the UI.
 - Scripts that are run by hand (`play_vs_random.py`, `play_bots.py`, `simulate.py`, `tune.py`) are left out of coverage in `pyproject.toml`.
