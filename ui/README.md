@@ -1,6 +1,6 @@
 # Poker UI
 
-A browser UI for the poker engine at the repo root. So far it deals two hands and a board from the engine's deck, names each hand with the engine's hand evaluator and shows which one wins. It can also stream a match between the engine's bots over a WebSocket, and draw the poker table for matches recorded from that stream. The web app doesn't show a live match yet.
+A browser UI for the poker engine at the repo root. So far it deals two hands and a board from the engine's deck, names each hand with the engine's hand evaluator and shows which one wins. It can also play a match between the engine's bots and redraw the poker table with everything that happens.
 
 ## Setup
 
@@ -31,7 +31,11 @@ Use `--port` to pick another port. The server only accepts connections from this
 
 ## Watch a match
 
-`ws://127.0.0.1:8000/ws/watch` plays a match between the engine's bots and sends you everything that happens. [`PROTOCOL.md`](PROTOCOL.md) describes the messages. With the server running, try it from the repo root:
+http://127.0.0.1:8000/watch plays a match between one of each of the engine's bots, and redraws the poker table with everything that happens. Reload the page for a new match.
+
+For now it's far too quick to follow. A whole match takes under a second, so what you mostly see is how it ended, with `Match over after 34 hands` above the table. If the server can't be reached, or goes away during a match, the page says so and keeps the last table on screen.
+
+The page gets the match from `ws://127.0.0.1:8000/ws/watch`, which sends everything that happens as soon as it happens. [`PROTOCOL.md`](PROTOCOL.md) describes the messages. With the server running, try it yourself from the repo root:
 
 ```sh
 .venv/bin/python -m websockets ws://127.0.0.1:8000/ws/watch
