@@ -260,6 +260,29 @@ code {
   font-weight: 700;
 }
 
+/* What the player last did this betting round. It sits in the gap between the suits in the corners
+   of their cards and the name on their nameplate, which it overlaps a little. The newest one is gold,
+   so it's clear who just acted. */
+.bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 0.25em);
+  transform: translateX(-50%);
+  padding: 0.05em 0.6em;
+  border-radius: 999px;
+  background: #10201a;
+  box-shadow: 0 0.05em 0.15em rgb(0 0 0 / 50%);
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.bubble.latest {
+  background: #f2c14e;
+  color: #2b1d00;
+}
+
 /* A bet sits in front of its player, between them and the middle. The first translate makes a big
    bet grow away from its player. */
 .bet {
@@ -286,6 +309,25 @@ code {
   border: 0.18em dashed #fffdf8;
   border-radius: 50%;
   background: #c62828;
+}
+
+/* A bet sliding into the pot, which sits above the board. It sets off from where the bet was and
+   travels the rest of the way from the seat to the middle of the table, undoing the shift that made
+   it grow away from its player. --speed is set in Table.tsx. The pot already counts these chips, so
+   it fades out on arrival. */
+.bet.swept {
+  animation: sweep calc(0.5s / var(--speed)) ease-in forwards;
+}
+
+@keyframes sweep {
+  70% {
+    opacity: 1;
+  }
+
+  to {
+    translate: calc(var(--across) * (50% - 19.9em)) calc(var(--down) * -8.5em - 2.9em);
+    opacity: 0;
+  }
 }
 
 /* Beside the bet, a little closer to the player, on the side clockwise from them. Whichever way the
@@ -329,6 +371,50 @@ code {
 
 .watch p {
   margin: 0;
+}
+
+/* Where the match stands goes next to the title, and the playback controls to the right. */
+.watch header p {
+  margin-right: auto;
+}
+
+.playback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.playback button {
+  padding: 0.3rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.speeds {
+  display: flex;
+}
+
+.speeds button {
+  border-radius: 0;
+  background: rgb(0 0 0 / 30%);
+  color: inherit;
+  box-shadow: none;
+}
+
+.speeds button:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+.speeds button:last-child {
+  border-radius: 0 999px 999px 0;
+}
+
+.speeds button:hover:not([aria-pressed='true']) {
+  background: rgb(0 0 0 / 45%);
+}
+
+.speeds button[aria-pressed='true'] {
+  background: #f2c14e;
+  color: #2b1d00;
 }
 
 /* The review page at /dev/fixtures. */

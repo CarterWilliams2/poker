@@ -33,9 +33,17 @@ Use `--port` to pick another port. The server only accepts connections from this
 
 http://127.0.0.1:8000/watch plays a match between one of each of the engine's bots, and redraws the poker table with everything that happens. Reload the page for a new match.
 
-For now it's far too quick to follow. A whole match takes under a second, so what you mostly see is how it ended, with `Match over after 34 hands` above the table. If the server can't be reached, or goes away during a match, the page says so and keeps the last table on screen.
+The match plays at a pace you can follow, about a second for each move. A bubble by each player says what they last did this betting round, like **Raises to 40**, with the newest one in gold. When a betting round ends, the bets slide into the pot. The line above the table says which hand it's on, and `Match over after 34 hands` at the end.
 
-The page gets the match from `ws://127.0.0.1:8000/ws/watch`, which sends everything that happens as soon as it happens. [`PROTOCOL.md`](PROTOCOL.md) describes the messages. With the server running, try it yourself from the repo root:
+The buttons at the top right control the pace:
+
+- **Pause** stops it, and **Play** carries on.
+- **Step** pauses and moves on by one thing at a time.
+- **½×**, **1×**, **2×** and **4×** change the speed.
+
+If the server can't be reached, the page says so. If it goes away during a match, the page plays what had already arrived, then says so and keeps the last table on screen.
+
+The page gets the match from `ws://127.0.0.1:8000/ws/watch`. The server sends everything as soon as it happens, so a whole match arrives in under a second and the page plays it back from there. [`PROTOCOL.md`](PROTOCOL.md) describes the messages. With the server running, try it yourself from the repo root:
 
 ```sh
 .venv/bin/python -m websockets ws://127.0.0.1:8000/ws/watch

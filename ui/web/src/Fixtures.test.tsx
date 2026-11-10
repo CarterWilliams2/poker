@@ -51,6 +51,16 @@ test('says what happened in each state, without repeating the table', () => {
   }
 })
 
+test("shows each player's last action this betting round", () => {
+  const figures = page.querySelectorAll('[id="split-pot"] figure')
+  const bubblesIn = (index: number) =>
+    [...figures[index].querySelectorAll('.bubble')].map((bubble) => bubble.textContent)
+  expect(bubblesIn(1)).toEqual([])
+  expect(bubblesIn(4)).toEqual(['Raises to 10', 'Folds', 'Calls 8'])
+  // Nothing's moving on this page, so bets don't slide anywhere.
+  expect(figures[5].querySelectorAll('.bubble, .swept')).toHaveLength(0)
+})
+
 test('goes through every table size, smallest first', () => {
   const headings = [...page.querySelectorAll('h2')].map((heading) => heading.textContent)
   expect(headings.map((heading) => Number(heading!.match(/(\d+) seats/)![1]))).toEqual([

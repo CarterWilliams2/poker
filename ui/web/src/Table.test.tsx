@@ -90,6 +90,46 @@ test('the dealer button sits with the player who has it', () => {
   expect(screen.getAllByRole('img', { name: 'Dealer button' })).toHaveLength(1)
 })
 
+test("shows a player's last action in a bubble, marking the newest", () => {
+  render(
+    <Table
+      table={table()}
+      bubbles={{
+        'Tuned 1': { text: 'Raises to 40', latest: false },
+        'Random 2': { text: 'Calls 38', latest: true },
+      }}
+    />,
+  )
+  const bubbleOf = (name: string) => within(seatOf(name)).getByTitle('Last action')
+  expect(bubbleOf('Tuned 1').textContent).toBe('Raises to 40')
+  expect(bubbleOf('Tuned 1').className).toBe('bubble')
+  expect(bubbleOf('Random 2').textContent).toBe('Calls 38')
+  expect(bubbleOf('Random 2').className).toBe('bubble latest')
+})
+
+test('draws no bubble for a player who has not acted', () => {
+  render(<Table table={table()} bubbles={{ 'Tuned 1': { text: 'Folds', latest: true } }} />)
+  expect(within(seatOf('Random 2')).queryByTitle('Last action')).toBeNull()
+  expect(seatOf('Random 2').textContent).toBe('Random 2100')
+})
+
+test('a swept bet slides away from its player, hidden from screen readers', () => {
+  render(<Table table={table()} swept={{ 'Random 2': 6 }} />)
+  const swept = seatOf('Random 2').querySelector('.bet.swept')!
+  expect(swept.textContent).toBe('6')
+  expect(swept.getAttribute('aria-hidden')).toBe('true')
+  expect(betIn(seatOf('Random 2'))).toBeUndefined()
+  expect(seatOf('Tuned 1').querySelector('.swept')).toBeNull()
+})
+
+test('animations go at normal speed unless told otherwise', () => {
+  const { rerender } = render(<Table table={table()} />)
+  const speed = () => screen.getByRole('region', { name: 'Table' }).style.getPropertyValue('--speed')
+  expect(speed()).toBe('1')
+  rerender(<Table table={table()} speed={0.5} />)
+  expect(speed()).toBe('0.5')
+})
+
 test('there is no dealer button before the first hand', () => {
   render(<Table table={table({ button: null })} />)
   expect(screen.queryByRole('img', { name: 'Dealer button' })).toBeNull()
