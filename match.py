@@ -3,7 +3,7 @@ from typing import Callable
 from agent import Agent
 from game import Game, Action
 from player import Player
-from table_view import TableView
+from table_view import HandResult, TableView
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 8
@@ -48,9 +48,15 @@ class Match:
         return self.game.is_over()
 
     def play_hand(self):
-        """Plays one hand and returns the pots as (amount, winners) pairs."""
+        """Plays one hand and returns the pots as (amount, winners) pairs. Afterwards, every
+        agent dealt in that has a hand_over method is told how the hand went."""
+        chips_before = {player: player.chips for player in self.players}
         results = self.game.play_hand()
         self.hands_played += 1
+        for player in self.game.seated:
+            hand_over = getattr(self._agents[player], "hand_over", None)
+            if hand_over:
+                hand_over(HandResult.for_player(player, self.game, results, chips_before))
         busted = [p for p in self.players if p.chips == 0 and p not in self.eliminated]
         # Whoever started the hand with more chips places higher, so goes out later.
         busted.sort(key=lambda p: p.committed_this_hand)
