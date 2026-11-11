@@ -411,3 +411,40 @@ test('only one match runs under StrictMode, at the same pace', () => {
   wait(1)
   expect(status()).toBe('Hand 1')
 })
+
+test('logs the hand beside the table, keeping up with the playback', () => {
+  watching()
+  receiveAll(HEADS_UP)
+  const log = () => screen.getByRole('complementary', { name: 'Hand log' })
+  const lines = () => within(log()).queryAllByRole('listitem').map((line) => line.textContent)
+  expect(log().textContent).toContain('The first hand is about to be dealt.')
+
+  wait(pauseAfter(HEADS_UP[0]))
+  expect(within(log()).getByRole('heading', { name: 'Hand 1' })).toBeTruthy()
+  expect(lines()).toEqual([
+    'Random 1 posts a small blind of 11',
+    'Calling 2 posts a big blind of 23',
+  ])
+
+  wait(pauseAfter(HEADS_UP[1]))
+  expect(lines().at(-1)).toBe('Random 1 folds3')
+  wait(pauseAfter(HEADS_UP[2]))
+  expect(lines().at(-1)).toBe('Calling 2 wins 30')
+
+  // A new hand starts a new log.
+  wait(pauseAfter(HEADS_UP[3]))
+  expect(within(log()).getByRole('heading', { name: 'Hand 2' })).toBeTruthy()
+  expect(lines()).toHaveLength(2)
+})
+
+test('the log stays on the last hand once the match is over', () => {
+  watching()
+  receiveAll(HEADS_UP)
+  for (const _ of HEADS_UP) fireEvent.click(button('Step'))
+  expect(status()).toBe('Match over after 2 hands')
+  const log = screen.getByRole('complementary', { name: 'Hand log' })
+  expect(within(log).getByRole('heading', { name: 'Hand 2' })).toBeTruthy()
+  expect(within(log).getAllByRole('listitem').at(-1)!.textContent).toBe(
+    'Random 1 is out, in 2nd place0',
+  )
+})

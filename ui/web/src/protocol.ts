@@ -28,13 +28,17 @@ export type ActionMessage = {
   table: TableState
 }
 
-// Most types of message have more fields of their own, which the web app doesn't use yet.
+// A player's cards at the showdown, and the name of the best hand they make, like "Two Pair".
+export type ShownHand = { name: string; cards: string[]; hand: string }
+
+// Some types of message have more fields of their own, which the web app doesn't use yet.
 export type TableMessage =
   | ActionMessage
+  | { type: 'street'; street: string; cards: string[]; table: TableState }
+  | { type: 'showdown'; hands: ShownHand[]; table: TableState }
+  | { type: 'pot'; amount: number; winners: string[]; table: TableState }
+  | { type: 'busted'; name: string; place: number; table: TableState }
   | { type: 'match_over'; hands_played: number; table: TableState }
-  | {
-      type: 'match_start' | 'hand_start' | 'street' | 'showdown' | 'pot' | 'busted'
-      table: TableState
-    }
+  | { type: 'match_start' | 'hand_start'; table: TableState }
 
 export type Message = TableMessage | { type: 'error'; message: string }

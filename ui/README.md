@@ -35,6 +35,8 @@ http://127.0.0.1:8000/watch plays a match between one of each of the engine's bo
 
 The match plays at a pace you can follow, about a second for each move. A bubble by each player says what they last did this betting round, like **Raises to 40**, with the newest one in gold. When a betting round ends, the bets slide into the pot. The line above the table says which hand it's on, and `Match over after 34 hands` at the end.
 
+The panel beside the table logs the hand so far, by street: the blinds, every move, the cards each street deals, the cards shown at the showdown and who won. The number on the right of each line is the pot straight after it, counting the bets still in front of the players. The newest line is highlighted, and a new hand starts a new log.
+
 The buttons at the top right control the pace:
 
 - **Pause** stops it, and **Play** carries on.

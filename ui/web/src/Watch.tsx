@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { watchMatch } from './api.ts'
 import { bubblesAt, sweptBets } from './events.ts'
+import HandLog from './HandLog.tsx'
+import { handLog } from './log.ts'
 import { PlaybackControls, usePlayback } from './Playback.tsx'
 import type { TableMessage } from './protocol.ts'
 import Table from './Table.tsx'
@@ -13,8 +15,8 @@ const NO_SERVER = (
 )
 
 // Watches a match between bots. The server sends the whole match at once, and the page plays it
-// back at a pace you can follow, redrawing the table with each message. Loading the page starts a
-// new match.
+// back at a pace you can follow, redrawing the table with each message, with a log of the hand
+// beside it. Loading the page starts a new match.
 export default function Watch() {
   // Every message so far. A long match has thousands, so they're added to one list rather than
   // copied into a new one each time, and setReceived tells React when there's another.
@@ -63,12 +65,15 @@ export default function Watch() {
         {message && <PlaybackControls playback={playback} />}
       </header>
       {message && (
-        <Table
-          table={message.table}
-          bubbles={bubblesAt(messages, shown)}
-          swept={sweptBets(messages[shown - 1]?.table, message.table)}
-          speed={playback.speed}
-        />
+        <div className="watch-body">
+          <Table
+            table={message.table}
+            bubbles={bubblesAt(messages, shown)}
+            swept={sweptBets(messages[shown - 1]?.table, message.table)}
+            speed={playback.speed}
+          />
+          <HandLog log={handLog(messages, shown)} />
+        </div>
       )}
     </main>
   )
